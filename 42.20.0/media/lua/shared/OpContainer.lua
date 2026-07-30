@@ -11,6 +11,7 @@
 -- Estas modificaciones protegen los contenedores de la forma más fiable posible, negando absolutamente cualquier acción sobre
 --- ellos, pero no pueden proporcionar indicaciones al usuario.
 -- Por favor, añada mensajes que indiquen al usuario por qué no puede realizar acciones con estos objetos.
+-- No protege maniquies debido a limitaciones técnicas. Consiga una forma de protegerlos.
 
 local legacyMoveableIsValid = ISMoveablesAction.isValid
 local legacyDestroyIsValid = ISDestroyStuffAction.isValid
@@ -18,8 +19,8 @@ local legacyCanScrapObject = ISMoveableSpriteProps.canScrapObject
 local legacyCanPickUpMoveableInternal = ISMoveableSpriteProps.canPickUpMoveableInternal
 
 -- Verifica si se puede realizar una acción sobre un contenedor, según el criterio de este mod.
--- Añadí condiciones aparentemente exesivas, porque vanilla hace comprobaciones que sugieren que los tipos pueden ser diferentes.
----@param character IsoObject? El personaje que está intentando mover el objeto.
+-- Los tipos se vefician de forma aparentemente inecesaria, porque el código vanilla sugiere que pueden ser diferentes.
+---@param character IsoObject? El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare? La baldosa de mapa donde se encuentra el objeto.
 ---@param object IsoObject? El objecto que se está evaluando. Puede ser cualquier cosa basada en IsoObject.
 ---@return boolean canAction Si se puede realizar una acción sobre el objeto.
@@ -43,7 +44,29 @@ local function canAction(character, square, object)
 	return true
 end
 
+-- Verifica si se puede realizar una acción sobre un objeto multi-sprite, según el criterio de este mod.
+---@param props ISMoveableSpriteProps Idk.
+---@param character IsoPlayer El personaje que intenta realizar la acción.
+---@param square IsoGridSquare La baldosa de mapa donde se encuentra el objeto multi-sptrite.
+local function checkMultiSpriteObject(props, character, square)
+	local grid = props:getSpriteGridInfo(square, true)
+
+	if not grid or #grid <= 0 then -- No sé si realmente es posible que sea -1, pero vanilla lo hace así.
+		return true
+	end
+
+	for _, member in ipairs(grid) do
+
+		if not canAction(character, nil, member.object) then
+			return false
+		end
+	end
+
+	return true
+end
+
 -- Verifica si un objeto puede levantarse, pero ahora protege los contenedores del mapa.
+-- Ya se hace una verificación multi-sprite en la función `canPickupMoveable`, un nivel arriba.
 ---@param _character IsoPlayer El personaje que está intentando mover el objeto.
 ---@param _square IsoGridSquare La baldosa de mapa donde se encuentra el objeto.
 ---@param _object IsoObject? El objecto que se está evaluando. Puede ser cualquier cosa basada en IsoObject.
@@ -53,7 +76,6 @@ end
 function ISMoveableSpriteProps:canPickUpMoveableInternal(_character, _square, _object, _isMulti)
 	local canPickUp = legacyCanPickUpMoveableInternal(self, _character, _square, _object, _isMulti)
 
-	-- Si vanilla dice que el objeto puede moverse, verificar si estamos de acuerdo.
 	if canPickUp then
 		canPickUp = canAction(_character, _square, _object)
 	end
@@ -66,11 +88,13 @@ end
 ---@diagnostic disable-next-line: duplicate-set-field
 function ISMoveablesAction:isValid()
 	local isValid = legacyMoveableIsValid(self)
-	local character = self.character
 
-	if isValid and not (ISMoveableDefinitions.cheat or character:isMovablesCheat()) then
+	if (isValid and self.mode == "rotate") and not (ISMoveableDefinitions.cheat or self.character:isMovablesCheat()) then
 
-		if self.mode == "rotate" then
+		if self.moveProps.isMultiSprite then
+			isValid = checkMultiSpriteObject(self.moveProps, self.character, self.square)
+
+		else
 			isValid = canAction(self.character, self.square, self.object)
 		end
 	end
@@ -92,19 +116,9 @@ function ISMoveableSpriteProps:canScrapObject(_character)
 		local object = self.object--[[@as IsoObject]] -- Por alguna razón esto no está documentado en Umbrella.
 		local canScrap ---@type boolean
 
-		-- Si el objeto es multi-sprite, verificar todos los objetos del grupo, de lo contrario, verificar si estamos en desacuerdo.
+		-- Si el objeto es multi-sprite, verificar todos los objetos del grupo, de lo contrario, ver si estamos en desacuerdo.
 		if self.isMultiSprite then
-
-			-- Buscar nuevamente si alguno de los objetos no puede desmantelarse, pero esta vez usando nuestro criterio.
-			for i, member in ipairs(self:getSpriteGridInfo(object:getSquare(), true)) do
-				local obj = member.object
-
-                canScrap = obj and canAction(_character, nil, obj)
-
-				if not canScrap then
-					break
-				end
-			end
+			canScrap = checkMultiSpriteObject(self, _character, object:getSquare())
 
 		else
 			canScrap = canAction(_character, object:getSquare(), object)
@@ -128,7 +142,14 @@ function ISDestroyStuffAction:isValid()
 
 	-- Si vanilla dice que el objeto puede destruirse, y el jugador no está chetado, verificar si estamos de acuerdo.
 	if isValid and not self.character:isBuildCheat() then
-		isValid = canAction(self.character, object:getSquare(), self.item)
+		local moveprops = ISMoveableSpriteProps.fromObject(object)
+
+		if moveprops and moveprops.isMultiSprite then
+			isValid = checkMultiSpriteObject(moveprops, self.character, object:getSquare())
+
+		else
+			isValid = canAction(self.character, object:getSquare(), self.item)
+		end
 	end
 
 	return isValid

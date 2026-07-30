@@ -8,8 +8,10 @@ Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escr
 
 ## Características:
 
-1. Extremadamente simple y ligero.
+1. Extremadamente simple y ligero, y seguro.
     - No necesita configuración.
+    - Consideraciones para contenedores multi-sprite.
+    - Hooking cercano a java que minimiza la sobrescritura de código.
 
 2. Protección de contenedores contra:
     - Rotarlos.
@@ -23,7 +25,7 @@ Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escr
 
 4. Los contenedores quedan desprotegidos si:
     - Son maniquíes.
-    - Un jugador los construyó.
+    - Un jugador los colocó.
     - Es un administrador usando trampas.
     - Están dentro de la casa segura del jugador.
 
@@ -31,7 +33,7 @@ Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escr
 
 Las trampas necesarias para saltar las restricciones del mod son:
 
-- `BuildChat`: Para destruir.
+- `BuildCheat`: Para destruir.
 - `MoveableCheat`: Para rotar, levantar, y desmantelar.
 
 ##
