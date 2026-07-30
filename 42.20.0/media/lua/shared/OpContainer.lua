@@ -4,14 +4,16 @@
 -- Contributors: 
 
 -- SOBRESCRIBIENDO FUNCIONES VANILLA:
+-- En shared/Moveables/ISMoveablesAction.lua
 -- En shared/Moveables/ISMoveableSpriteProps.lua
 -- En shared/TimedActions/ISDestroyStuffAction.lua
 
--- Estas modificaciones protegen los contenedores de la forma más fiable posible, negando absolutamente  cualquier acción sobre
+-- Estas modificaciones protegen los contenedores de la forma más fiable posible, negando absolutamente cualquier acción sobre
 --- ellos, pero no pueden proporcionar indicaciones al usuario.
 -- Por favor, añada mensajes que indiquen al usuario por qué no puede realizar acciones con estos objetos.
 
-local legacyIsValid = ISDestroyStuffAction.isValid
+local legacyMoveableIsValid = ISMoveablesAction.isValid
+local legacyDestroyIsValid = ISDestroyStuffAction.isValid
 local legacyCanScrapObject = ISMoveableSpriteProps.canScrapObject
 local legacyCanPickUpMoveableInternal = ISMoveableSpriteProps.canPickUpMoveableInternal
 
@@ -31,7 +33,7 @@ local function canAction(character, square, object)
 		if object:hasProperty("container") then
 			local safehouse = instanceof(character, "IsoPlayer") and SafeHouse.getSafeHouse(square)
 
-			-- Si el objeto no está en una safehouse, o el personaje no es un jugador que pertenezca a ella, prevenir recogida.
+			-- Si el objeto no está en una safehouse, o el personaje no es un jugador que pertenezca a ella, prevenir acción.
 			if not safehouse or not safehouse:playerAllowed(character) then
 				return false
 			end
@@ -59,11 +61,28 @@ function ISMoveableSpriteProps:canPickUpMoveableInternal(_character, _square, _o
 	return canPickUp
 end
 
+-- Verifica si un objeto puede rotarse, pero ahora protege los contenedores del mapa.
+---@return boolean isValid Si la acción es válida.
+---@diagnostic disable-next-line: duplicate-set-field
+function ISMoveablesAction:isValid()
+	local isValid = legacyMoveableIsValid(self)
+	local character = self.character
+
+	if isValid and not (ISMoveableDefinitions.cheat or character:isMovablesCheat()) then
+
+		if self.mode == "rotate" then
+			isValid = canAction(self.character, self.square, self.object)
+		end
+	end
+
+	return isValid
+end
+
 -- Verifica si un objeto puede desmantelarse, pero ahora protege los contenedores del mapa.
----@param _character IsoPlayer
----@return umbrella.ISMoveableSpriteProps.CanScrapResult result
----@return number chance
----@return string? perk
+---@param _character IsoPlayer El personaje que intenta desmantelar el objeto.
+---@return umbrella.ISMoveableSpriteProps.CanScrapResult result El resultado de la verificación.
+---@return number chance La probabilidad de obtener recursos de la acción.
+---@return string? perk La habilidad necesaria para desmantelar el objeto.
 ---@diagnostic disable-next-line: duplicate-set-field
 function ISMoveableSpriteProps:canScrapObject(_character)
 	local result, chance, perk = legacyCanScrapObject(self, _character)
@@ -73,7 +92,7 @@ function ISMoveableSpriteProps:canScrapObject(_character)
 		local object = self.object--[[@as IsoObject]] -- Por alguna razón esto no está documentado en Umbrella.
 		local canScrap ---@type boolean
 
-		-- Si el objeto es multi-sprite, verificar todos los objetos del grupo.
+		-- Si el objeto es multi-sprite, verificar todos los objetos del grupo, de lo contrario, verificar si estamos en desacuerdo.
 		if self.isMultiSprite then
 
 			-- Buscar nuevamente si alguno de los objetos no puede desmantelarse, pero esta vez usando nuestro criterio.
@@ -87,7 +106,6 @@ function ISMoveableSpriteProps:canScrapObject(_character)
 				end
 			end
 
-		-- De lo contrario, simplemente verificar si estamos en desacuerdo.
 		else
 			canScrap = canAction(_character, object:getSquare(), object)
 		end
@@ -102,9 +120,10 @@ function ISMoveableSpriteProps:canScrapObject(_character)
 end
 
 -- Valida si un objeto debería ser destruído usando una almádena, pero ahora protege los contenedores del mapa.
+---@return boolean isValid Si la acción es válida.
 ---@diagnostic disable-next-line: duplicate-set-field
 function ISDestroyStuffAction:isValid()
-	local isValid = legacyIsValid(self)
+	local isValid = legacyDestroyIsValid(self)
 	local object = self.item
 
 	-- Si vanilla dice que el objeto puede destruirse, y el jugador no está chetado, verificar si estamos de acuerdo.
@@ -115,5 +134,5 @@ function ISDestroyStuffAction:isValid()
 	return isValid
 end
 
--- Esto indudablemente evita que rompan los contenedores leves, pero causa inconsistencias que los usuarios notarán.
---- Esto está listo para producción, pero para corregir estas inconsistencias, deben sobrescribirse más funciones.
+-- Esto indudablemente evita que rompan los contenedores, pero causa inconsistencias leves que los usuarios notarán.
+-- Aunque está listo para producción, hará falta sobrescribir más funciones para corregir las inconsistencias.

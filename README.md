@@ -12,9 +12,10 @@ Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escr
     - No necesita configuración.
 
 2. Protección de contenedores contra:
+    - Rotarlos.
+    - Demolerlos usando una almádena.
     - Levantarlos al inventario, o al suelo.
     - Desmantelarlos para obtener materiales.
-    - Demolerlos usando una almádena.
 
 3. Los contenedores están protegidos en:
     - Interiores, dentro de los edificios.
@@ -31,8 +32,8 @@ Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escr
 Las trampas necesarias para saltar las restricciones del mod son:
 
 - `BuildChat`: Para destruir.
-- `MoveableCheat`: Para levantar y desmantelar.
+- `MoveableCheat`: Para rotar, levantar, y desmantelar.
 
 ##
 
-Este mod está publicado bajo licencia CC0-1.0, y soporta únicamente la última versión de Proyect Zomboid: 1.20.0.
+Este mod está publicado bajo licencia CC0-1.0, y soporta únicamente la última versión de Project Zomboid: 1.20.0.
