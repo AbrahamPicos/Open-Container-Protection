@@ -1,15 +1,17 @@
 # Open Container Protection.
 
-Protege los contenedores del mundo para que los jugadores no puedan romperlos o moverlos, con la intención de proteger el reloot.
+Protege los contenedores del mundo para que los jugadores no puedan alterarlos, con la intención de proteger el reloot.
 
-Este proyecto surge como una alternativa libre a los mods de protección de contenedores existentes, por lo que puede hacer lo que quiera con el. No es necesario dar ninigún crédito a los colaboradores.
+Este proyecto surge como una alternativa libre a los mods de protección de contenedores existentes. Por lo que a diferencia de ellos, puede hacer lo que quiera con este sin la necesidad de dar algún crédito a los colaboradores.
 
-Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escrito completamente desde cero, siguiendo un enfoque distinto.
+Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escrito completamente desde cero, siguiendo un enfoque  radicalmente distinto.
 
 ## Características:
 
 1. Extremadamente simple y ligero, y seguro.
     - No necesita configuración.
+    - Programado defensivamente.
+    - Protección del lado del servidor.
     - Consideraciones para contenedores multi-sprite.
     - Hooking cercano a java que minimiza la sobrescritura de código.
 
@@ -38,4 +40,4 @@ Las trampas necesarias para saltar las restricciones del mod son:
 
 ##
 
-Este mod está publicado bajo licencia CC0-1.0, y soporta únicamente la última versión de Project Zomboid: 1.20.0.
+Este mod está hecho 100% por humanos, y actualmente no se aceptan contribuciones de intelgencia artificial. Está publicado bajo licencia CC0-1.0, y soporta únicamente la última versión de Project Zomboid: 42.20.0.

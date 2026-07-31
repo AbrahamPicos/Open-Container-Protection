@@ -20,28 +20,48 @@ local legacyCanPickUpMoveableInternal = ISMoveableSpriteProps.canPickUpMoveableI
 
 -- Verifica si se puede realizar una acción sobre un contenedor, según el criterio de este mod.
 -- Los tipos se vefician de forma aparentemente inecesaria, porque el código vanilla sugiere que pueden ser diferentes.
----@param character IsoObject? El personaje que intenta realizar la acción.
+---@param character IsoObject El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare? La baldosa de mapa donde se encuentra el objeto.
----@param object IsoObject? El objecto que se está evaluando. Puede ser cualquier cosa basada en IsoObject.
+---@param object IsoObject El objecto que se está evaluando. Puede ser cualquier cosa basada en IsoObject.
 ---@return boolean canAction Si se puede realizar una acción sobre el objeto.
 local function canAction(character, square, object)
 
-	-- Si hay un personaje, y el objeto no es golpeable (lo que significa que no fue hecho por un jugador).
-	if (character and instanceof(character, "IsoGameCharacter")) and (object and not instanceof(object, "IsoThumpable")) then
-		square = square or object:getSquare()
+	-- Validar personaje, objeto, y que el objeto no sea golpeable.
+	if not instanceof(character, "IsoGameCharacter")
+		or not instanceof(object, "IsoObject")
+		or instanceof(object, "IsoThumpable")
+	then
+		return true
+	end
 
-		-- Si el objeto es un contenedor.
-		if object:hasProperty("container") then
-			local safehouse = instanceof(character, "IsoPlayer") and SafeHouse.getSafeHouse(square)
+	square = square or object:getSquare()
 
-			-- Si el objeto no está en una safehouse, o el personaje no es un jugador que pertenezca a ella, prevenir acción.
-			if not safehouse or not safehouse:playerAllowed(character) then
-				return false
-			end
+	-- Validar que el objeto esté en el mundo.
+	if not instanceof(square, "IsoGridSquare") then
+		return true
+	end
+
+	-- Validar que el objeto sea un contenedor.
+	if not object:hasProperty("container") then
+
+		if instanceof(object, "IsoMannequin") or object:getContainerCount() < 1 then
+			return true
 		end
 	end
 
-	return true
+	-- Si el personaje no es un jugador, denegar acción.
+	if not instanceof(character, "IsoPlayer") then
+		return false -- Dudo que esto se use en NPCs, pero bueno.
+	end
+
+	local safehouse = SafeHouse.getSafeHouse(square)
+
+	-- Si el objeto está en una safehouse, y el jugador está permitido en ella, permitir acción.
+	if safehouse then
+		return safehouse:playerAllowed(character)
+	end
+
+	return false
 end
 
 -- Verifica si se puede realizar una acción sobre un objeto multi-sprite, según el criterio de este mod.
@@ -49,13 +69,14 @@ end
 ---@param character IsoPlayer El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare La baldosa de mapa donde se encuentra el objeto multi-sptrite.
 local function checkMultiSpriteObject(props, character, square)
-	local grid = props:getSpriteGridInfo(square, true)
+	local getInfo = props.getSpriteGridInfo
+	local grid = (type(getInfo) == "function" and getInfo(props, square, true)) or {}
 
-	if not grid or #grid <= 0 then -- No sé si realmente es posible que sea -1, pero vanilla lo hace así.
+	if type(grid) ~= "table" then
 		return true
 	end
 
-	for _, member in ipairs(grid) do
+	for _, member in pairs(grid) do
 
 		if not canAction(character, nil, member.object) then
 			return false
@@ -88,14 +109,22 @@ end
 ---@diagnostic disable-next-line: duplicate-set-field
 function ISMoveablesAction:isValid()
 	local isValid = legacyMoveableIsValid(self)
+	local character = self.character
 
-	if (isValid and self.mode == "rotate") and not (ISMoveableDefinitions.cheat or self.character:isMovablesCheat()) then
+	if not instanceof(character, "IsoPlayer") then
+		return isValid
+	end
 
-		if self.moveProps.isMultiSprite then
-			isValid = checkMultiSpriteObject(self.moveProps, self.character, self.square)
+	local cheat = type(ISMoveableDefinitions) == "table" and ISMoveableDefinitions.cheat
+
+	if isValid and self.mode == "rotate" and not (cheat or character:isMovablesCheat()) then
+		local moveProps = self.moveProps
+
+		if moveProps and type(moveProps) == "table" and moveProps.isMultiSprite then
+			isValid = checkMultiSpriteObject(moveProps, character, self.square)
 
 		else
-			isValid = canAction(self.character, self.square, self.object)
+			isValid = canAction(character, self.square, self.object)
 		end
 	end
 
@@ -110,21 +139,22 @@ end
 ---@diagnostic disable-next-line: duplicate-set-field
 function ISMoveableSpriteProps:canScrapObject(_character)
 	local result, chance, perk = legacyCanScrapObject(self, _character)
+	local object = self.object--[[@as IsoObject]] -- Por alguna razón esto no está documentado en Umbrella.
 
-	-- Si vanilla dice que el objeto puede desmantelarse, y el jugador no está chetado.
+	if not instanceof(object, "IsoObject") or not instanceof(_character, "IsoPlayer") then
+		return result, chance, perk
+	end
+
 	if result.canScrap and not _character:isMovablesCheat() then
-		local object = self.object--[[@as IsoObject]] -- Por alguna razón esto no está documentado en Umbrella.
 		local canScrap ---@type boolean
 
-		-- Si el objeto es multi-sprite, verificar todos los objetos del grupo, de lo contrario, ver si estamos en desacuerdo.
 		if self.isMultiSprite then
 			canScrap = checkMultiSpriteObject(self, _character, object:getSquare())
 
 		else
-			canScrap = canAction(_character, object:getSquare(), object)
+			canScrap = canAction(_character, nil, object)
 		end
 
-		-- Si estamos en desacuerdo, negar.
 		if not canScrap then
 			perk = nil; chance = 0; result = {canScrap = false}
 		end
@@ -138,17 +168,22 @@ end
 ---@diagnostic disable-next-line: duplicate-set-field
 function ISDestroyStuffAction:isValid()
 	local isValid = legacyDestroyIsValid(self)
+	local character = self.character
 	local object = self.item
 
-	-- Si vanilla dice que el objeto puede destruirse, y el jugador no está chetado, verificar si estamos de acuerdo.
-	if isValid and not self.character:isBuildCheat() then
-		local moveprops = ISMoveableSpriteProps.fromObject(object)
+	if not instanceof(object, "IsoObject") or not instanceof(character, "IsoPlayer") then
+		return isValid
+	end
 
-		if moveprops and moveprops.isMultiSprite then
-			isValid = checkMultiSpriteObject(moveprops, self.character, object:getSquare())
+	if isValid and not character:isBuildCheat() then
+		local fromObject = type(ISMoveableSpriteProps) == "table" and ISMoveableSpriteProps.fromObject
+		local moveProps = type(fromObject) == "function" and fromObject(object)
+
+		if moveProps and moveProps.isMultiSprite then
+			isValid = checkMultiSpriteObject(moveProps, character, object:getSquare())
 
 		else
-			isValid = canAction(self.character, object:getSquare(), self.item)
+			isValid = canAction(character, nil, object)
 		end
 	end
 
