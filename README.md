@@ -1,43 +1,48 @@
 # Open Container Protection.
 
-Protege los contenedores del mundo para que los jugadores no puedan alterarlos, con la intención de proteger el reloot.
+[Español](README.md)
 
-Este proyecto surge como una alternativa libre a los mods de protección de contenedores existentes. Por lo que a diferencia de ellos, puede hacer lo que quiera con este sin la necesidad de dar algún crédito a los colaboradores.
+Protect the containers where loot respawns, so that players cannot move or break them.
 
-Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escrito completamente desde cero, siguiendo un enfoque  radicalmente distinto.
+Unlike other container protection mods, this one is designed to protect all containers that haven't been placed by players, so it will protect any container anywhere on the map.
 
-## Características:
+It emerged as a free alternative to existing container protection mods. Therefore, unlike those mods, you can do whatever you want with it without needing to credit the contributors.
 
-1. Extremadamente simple y ligero, y seguro.
-    - No necesita configuración.
-    - Programado defensivamente.
-    - Protección del lado del servidor.
-    - Consideraciones para contenedores multi-sprite.
-    - Hooking cercano a java que minimiza la sobrescritura de código.
+Although it is inspired by iLusioN's "Container Protection" mod, it has been written completely from scratch, following a radically different approach.
 
-2. Protección de contenedores contra:
-    - Rotarlos.
-    - Demolerlos usando una almádena.
-    - Levantarlos al inventario, o al suelo.
-    - Desmantelarlos para obtener materiales.
+## Features:
 
-3. Los contenedores están protegidos en:
-    - Interiores, dentro de los edificios.
-    - Exteriores, incluso en medio de la nada.
+1. Extremely simple, lightweight, and secure.
+    - Defensive programming.
+    - Server-side protection.
+    - No configuration required.
+    - Considerations for containers with multiple sprites.
 
-4. Los contenedores quedan desprotegidos si:
-    - Son maniquíes.
-    - Un jugador los colocó.
-    - Es un administrador usando trampas.
-    - Están dentro de la casa segura del jugador.
+3. Container protection in:
+    - Indoors, inside buildings.
+    - Outdoors, even in remote locations.
 
-##
+2. Container protection against:
+    - Rotate.
+    - Pick up.
+    - Dismantle.
+    - Destroy with a sledgehammer.
 
-Las trampas necesarias para saltar las restricciones del mod son:
-
-- `BuildCheat`: Para destruir.
-- `MoveableCheat`: Para rotar, levantar, y desmantelar.
+4. Exceptions to container protection if:
+    - They are mannequins.
+    - A player placed them.
+    - They are inside the player's safe house.
+    - The player is an administrator using cheats.
 
 ##
 
-Este mod está hecho 100% por humanos, y actualmente no se aceptan contribuciones de intelgencia artificial. Está publicado bajo licencia CC0-1.0, y soporta únicamente la última versión de Project Zomboid: 42.20.0.
+The cheats needed to bypass the mod's restrictions are:
+
+- `BuildCheat`: To destroy.
+- `MoveableCheat`: To rotate, pick up, and disassemble.
+
+##
+
+This mod is 100% human-created and AI contributions are not currently being accepted. It is released under the CC0-1.0 license and is only compatible with the latest version of Project Zomboid: 42.20.0.
+
+Steam Workshop page: https://steamcommunity.com/sharedfiles/filedetails/?id=3774828917

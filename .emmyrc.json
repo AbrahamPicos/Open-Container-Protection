@@ -1,0 +1,13 @@
+{
+  "completion": {
+    "autoRequireSeparator": "/"
+  },
+  "runtime": {
+    "version": "Lua5.1",
+    "requirePattern": ["?.lua", "?/init.lua", "server/?.lua"]
+  },
+  "workspace": {
+    "library": ["../Umbrella-42.20.0/library"],
+    "workspaceRoots": []
+  }
+}

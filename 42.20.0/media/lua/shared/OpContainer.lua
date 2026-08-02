@@ -3,48 +3,131 @@
 -- Maintainer: AbrahamPicos.
 -- Contributors: 
 
--- SOBRESCRIBIENDO FUNCIONES VANILLA:
--- En shared/Moveables/ISMoveablesAction.lua
--- En shared/Moveables/ISMoveableSpriteProps.lua
--- En shared/TimedActions/ISDestroyStuffAction.lua
+-- Corrigiendo un campo faltante en Umbrella.
+---@class ISMoveableSpriteProps
+---@field object IsoObject
 
--- Estas modificaciones protegen los contenedores de la forma más fiable posible, negando absolutamente cualquier acción sobre
---- ellos, pero no pueden proporcionar indicaciones al usuario.
--- Por favor, añada mensajes que indiquen al usuario por qué no puede realizar acciones con estos objetos.
--- No protege maniquies debido a limitaciones técnicas. Consiga una forma de protegerlos.
+---@alias CanScrapResult umbrella.ISMoveableSpriteProps.CanScrapResult -- Por practicidad.
 
-local legacyMoveableIsValid = ISMoveablesAction.isValid
-local legacyDestroyIsValid = ISDestroyStuffAction.isValid
-local legacyCanScrapObject = ISMoveableSpriteProps.canScrapObject
-local legacyCanPickUpMoveableInternal = ISMoveableSpriteProps.canPickUpMoveableInternal
+------------------------------
+-- Utilidades de seguridad: --
+------------------------------
 
--- Verifica si se puede realizar una acción sobre un contenedor, según el criterio de este mod.
--- Los tipos se vefician de forma aparentemente inecesaria, porque el código vanilla sugiere que pueden ser diferentes.
----@param character IsoObject El personaje que intenta realizar la acción.
----@param square IsoGridSquare? La baldosa de mapa donde se encuentra el objeto.
----@param object IsoObject El objecto que se está evaluando. Puede ser cualquier cosa basada en IsoObject.
+local type = type -- El pilar que sostiene a este mod.
+
+-- Devuélve una tabla si no la había.
+---@generic T
+---@param t T La supuesta tabla.
+---@return T t Una tabla. 
+local function secureTable(t)
+
+	if type(t) == "table" then
+		return t
+	end
+
+	return {}
+end
+
+-- Devuélve una función si no la había.
+---@generic F
+---@param f F La supuesta función.
+---@return F object Una función.
+local function secureFunction(f)
+
+	if type(f) == "function" then
+		return f
+	end
+
+	return function (...) return false end
+end
+
+-- Verifica si es seguro intentar llamar a una función.
+---@param call function La función que quiere llamar.
+---@return boolean isSecure Si es seguro hacerlo.
+local function isCallSecure(call)
+
+	if type(call) == "function" then
+		return true
+	end
+
+	return false
+end
+
+-----------------------------------------
+-- Caché de clases, métodos, y tablas: --
+-----------------------------------------
+
+OpContainer = OpContainer or {
+
+	SafeHouse = secureTable(SafeHouse),
+
+	ISMoveablesAction = secureTable(ISMoveablesAction),
+	ISDestroyStuffAction = secureTable(ISDestroyStuffAction),
+	ISMoveableSpriteProps = secureTable(ISMoveableSpriteProps),
+
+	pairs = pairs,
+	isClient = secureFunction(isClient),
+	instanceof = secureFunction(instanceof),
+
+	ISMoveableDefinitions = secureTable(ISMoveableDefinitions)
+}
+
+local OpContainer = OpContainer
+local SafeHouse = OpContainer.SafeHouse
+local MoveableModesBlocked = {pickup = true, rotate = true, scrap = true}
+
+local ISMoveablesAction = OpContainer.ISMoveablesAction
+local ISDestroyStuffAction = OpContainer.ISDestroyStuffAction
+local ISMoveableSpriteProps = OpContainer.ISMoveableSpriteProps
+
+local pairs = OpContainer.pairs
+local isClient = OpContainer.isClient
+local instanceof = OpContainer.instanceof
+local getSafeHouse = secureFunction(SafeHouse.getSafeHouse)
+
+OpContainer.Legacy = OpContainer.Legacy or {
+
+	moveableIsValid = secureFunction(ISMoveablesAction.isValid),
+	destroyIsValid = secureFunction(ISDestroyStuffAction.isValid)
+}
+
+local Legacy = OpContainer.Legacy
+local ISMoveableDefinitions = OpContainer.ISMoveableDefinitions
+
+local getMovePropsFromObject = secureFunction(ISMoveableSpriteProps.fromObject)
+
+---------------------------
+-- Funciones auxiliares: --
+---------------------------
+
+-- Verifica si se puede realizar una acción sobre un objecto, según el criterio de este mod.
+---@param character IsoGameCharacter El personaje que intenta realizar la acción.
+---@param square IsoGridSquare La baldosa de mapa donde se encuentra el objeto.
+---@param object IsoObject El objeto que se está evaluando. Puede ser cualquier cosa basada en IsoObject.
 ---@return boolean canAction Si se puede realizar una acción sobre el objeto.
-local function canAction(character, square, object)
+local function checkObject(character, square, object)
 
-	-- Validar personaje, objeto, y que el objeto no sea golpeable.
-	if not instanceof(character, "IsoGameCharacter")
+	-- Validar personaje, objeto, y que el objeto esté en el mundo y no sea golpeable.
+	if instanceof(object, "IsoThumpable")
 		or not instanceof(object, "IsoObject")
-		or instanceof(object, "IsoThumpable")
+		or not instanceof(character, "IsoGameCharacter")
+		or not instanceof(square, "IsoGridSquare")
 	then
 		return true
 	end
 
-	square = square or object:getSquare()
-
-	-- Validar que el objeto esté en el mundo.
-	if not instanceof(square, "IsoGridSquare") then
-		return true
-	end
-
 	-- Validar que el objeto sea un contenedor.
-	if not object:hasProperty("container") then
+	if not isCallSecure(object.hasProperty) or not object:hasProperty("container") then
 
-		if instanceof(object, "IsoMannequin") or object:getContainerCount() < 1 then
+		-- No podemos proteger esto actualmente.
+		if instanceof(object, "IsoMannequin") then
+			return true
+		end
+
+		local containerCount = isCallSecure(object.getContainerCount) and object:getContainerCount()
+
+		-- Si además de no tener la etiqueta, tampoco tiene algún inventario, no es un contenedor.
+		if type(containerCount) ~= "number" or containerCount < 1 then
 			return true
 		end
 	end
@@ -54,10 +137,10 @@ local function canAction(character, square, object)
 		return false -- Dudo que esto se use en NPCs, pero bueno.
 	end
 
-	local safehouse = SafeHouse.getSafeHouse(square)
+	local safehouse = getSafeHouse(square)
 
 	-- Si el objeto está en una safehouse, y el jugador está permitido en ella, permitir acción.
-	if safehouse then
+	if instanceof(safehouse, "SafeHouse") and isCallSecure(safehouse.playerAllowed) then
 		return safehouse:playerAllowed(character)
 	end
 
@@ -65,20 +148,29 @@ local function canAction(character, square, object)
 end
 
 -- Verifica si se puede realizar una acción sobre un objeto multi-sprite, según el criterio de este mod.
----@param props ISMoveableSpriteProps Idk.
+-- Este tipo de objetos tienen a otros objetos asociados en celdas adyacentes, y deben tratarse como un único objeto.
+---@param moveProps ISMoveableSpriteProps Las propiedades del sprite asociado al objeto.
 ---@param character IsoPlayer El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare La baldosa de mapa donde se encuentra el objeto multi-sptrite.
-local function checkMultiSpriteObject(props, character, square)
-	local getInfo = props.getSpriteGridInfo
-	local grid = (type(getInfo) == "function" and getInfo(props, square, true)) or {}
-
-	if type(grid) ~= "table" then
-		return true
+---@param object IsoObject?
+---@return boolean canAction Si se puede realizar una acción sobre el objeto.
+local function checkMultiSpriteObject(moveProps, character, square, object)
+	local grid ---@type SpriteGridCache?
+	
+	-- Si el objeto es multi-sprite, obtener su GridCache.
+	if moveProps.isMultiSprite and isCallSecure(moveProps.getSpriteGridInfo) then
+		grid = moveProps.getSpriteGridInfo(moveProps, square, true)
 	end
 
-	for _, member in pairs(grid) do
+	-- Buscar si alguno de los miembros debería protegerse. Si es así, denegar acción.
+	for _, member in pairs(grid or {{object = object}}) do
 
-		if not canAction(character, nil, member.object) then
+		if not checkObject(character, square, member.object) then
+			
+			if isClient() and isCallSecure(character.setHaloNote) then
+				character:setHaloNote("CONTAINER PROTECTED.")
+			end
+			
 			return false
 		end
 	end
@@ -86,109 +178,58 @@ local function checkMultiSpriteObject(props, character, square)
 	return true
 end
 
--- Verifica si un objeto puede levantarse, pero ahora protege los contenedores del mapa.
--- Ya se hace una verificación multi-sprite en la función `canPickupMoveable`, un nivel arriba.
----@param _character IsoPlayer El personaje que está intentando mover el objeto.
----@param _square IsoGridSquare La baldosa de mapa donde se encuentra el objeto.
----@param _object IsoObject? El objecto que se está evaluando. Puede ser cualquier cosa basada en IsoObject.
----@param _isMulti boolean Si el objecto es un objeto multi-sprite.
----@return boolean canPickUp Si el objeto puede levantarse.
----@diagnostic disable-next-line: duplicate-set-field
-function ISMoveableSpriteProps:canPickUpMoveableInternal(_character, _square, _object, _isMulti)
-	local canPickUp = legacyCanPickUpMoveableInternal(self, _character, _square, _object, _isMulti)
+--------------
+-- Parches: --
+--------------
 
-	if canPickUp then
-		canPickUp = canAction(_character, _square, _object)
-	end
-
-	return canPickUp
-end
-
--- Verifica si un objeto puede rotarse, pero ahora protege los contenedores del mapa.
+-- Se aplica a ISMoveablesAction:isValid.
+-- Verifica si un objeto puede recogerse, rotarse, y desmontarse, pero ahora protege los contenedores con reloot.
+---@param self ISMoveablesAction
 ---@return boolean isValid Si la acción es válida.
----@diagnostic disable-next-line: duplicate-set-field
-function ISMoveablesAction:isValid()
-	local isValid = legacyMoveableIsValid(self)
+function OpContainer.moveablesActionIsValid(self)
+	local isValid = Legacy.moveableIsValid(self)
 	local character = self.character
 
-	if not instanceof(character, "IsoPlayer") then
+	if not isValid or not MoveableModesBlocked[self.mode] or ISMoveableDefinitions.cheat
+		or not instanceof(character, "IsoPlayer")
+		or (isCallSecure(character.isMovablesCheat) and character:isMovablesCheat())
+	then
 		return isValid
 	end
 
-	local cheat = type(ISMoveableDefinitions) == "table" and ISMoveableDefinitions.cheat
-
-	if isValid and self.mode == "rotate" and not (cheat or character:isMovablesCheat()) then
-		local moveProps = self.moveProps
-
-		if moveProps and type(moveProps) == "table" and moveProps.isMultiSprite then
-			isValid = checkMultiSpriteObject(moveProps, character, self.square)
-
-		else
-			isValid = canAction(character, self.square, self.object)
-		end
-	end
-
-	return isValid
+	return checkMultiSpriteObject(self.moveProps, character, self.square, self.object)
 end
 
--- Verifica si un objeto puede desmantelarse, pero ahora protege los contenedores del mapa.
----@param _character IsoPlayer El personaje que intenta desmantelar el objeto.
----@return umbrella.ISMoveableSpriteProps.CanScrapResult result El resultado de la verificación.
----@return number chance La probabilidad de obtener recursos de la acción.
----@return string? perk La habilidad necesaria para desmantelar el objeto.
----@diagnostic disable-next-line: duplicate-set-field
-function ISMoveableSpriteProps:canScrapObject(_character)
-	local result, chance, perk = legacyCanScrapObject(self, _character)
-	local object = self.object--[[@as IsoObject]] -- Por alguna razón esto no está documentado en Umbrella.
-
-	if not instanceof(object, "IsoObject") or not instanceof(_character, "IsoPlayer") then
-		return result, chance, perk
-	end
-
-	if result.canScrap and not _character:isMovablesCheat() then
-		local canScrap ---@type boolean
-
-		if self.isMultiSprite then
-			canScrap = checkMultiSpriteObject(self, _character, object:getSquare())
-
-		else
-			canScrap = canAction(_character, nil, object)
-		end
-
-		if not canScrap then
-			perk = nil; chance = 0; result = {canScrap = false}
-		end
-	end
-
-	return result, chance, perk
-end
-
--- Valida si un objeto debería ser destruído usando una almádena, pero ahora protege los contenedores del mapa.
+-- Se aplica a ISDestroyStuffAction:isValid.
+-- Valida si un objeto puede ser destruído con una almádena, pero ahora protege los contenedores con reloot.
+---@param self ISDestroyStuffAction
 ---@return boolean isValid Si la acción es válida.
----@diagnostic disable-next-line: duplicate-set-field
-function ISDestroyStuffAction:isValid()
-	local isValid = legacyDestroyIsValid(self)
+function OpContainer.destroyActionIsValid(self)
+	local isValid = Legacy.destroyIsValid(self)
 	local character = self.character
 	local object = self.item
 
-	if not instanceof(object, "IsoObject") or not instanceof(character, "IsoPlayer") then
+	if not isValid
+		or not instanceof(character, "IsoPlayer")
+		or (isCallSecure(character.isBuildCheat) and character:isBuildCheat())
+		or not (instanceof(object, "IsoObject") and isCallSecure(object.getSquare))
+	then
 		return isValid
 	end
 
-	if isValid and not character:isBuildCheat() then
-		local fromObject = type(ISMoveableSpriteProps) == "table" and ISMoveableSpriteProps.fromObject
-		local moveProps = type(fromObject) == "function" and fromObject(object)
+	return checkMultiSpriteObject(
+		secureTable(getMovePropsFromObject(object)), character, object:getSquare(), object
+	)
+end
 
-		if moveProps and moveProps.isMultiSprite then
-			isValid = checkMultiSpriteObject(moveProps, character, object:getSquare())
+----------------
+-- Enganches: --
+----------------
 
-		else
-			isValid = canAction(character, nil, object)
-		end
-	end
-
-	return isValid
+function ISMoveablesAction:isValid()
+	return OpContainer.moveablesActionIsValid(self)	
+end; function ISDestroyStuffAction:isValid()
+	return OpContainer.destroyActionIsValid(self)
 end
 
 -- Esto indudablemente evita que rompan los contenedores, pero causa inconsistencias leves que los usuarios notarán.
--- Aunque está listo para producción, hará falta sobrescribir más funciones para corregir las inconsistencias.
