@@ -1,6 +1,6 @@
 # Open Container Protection.
 
-[English](README_en.md)
+[English](README.md)
 
 Protege los contenedores donde reaparece el botín, para que los jugadores no puedan moverlos ni romperlos.
 
@@ -22,7 +22,7 @@ Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escr
     - Interiores, dentro de edificios.
     - Exteriores, incluso en lugares remotos.
 
-2. Protección de contenedores contra: 
+2. Protección de contenedores contra:
     - Rotar.
     - Recoger.
     - Desmantelar.

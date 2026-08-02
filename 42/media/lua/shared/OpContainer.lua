@@ -1,7 +1,7 @@
 -- OpContainer.lua
 -- Licence: CC0-1.0(Visit https://creativecommons.org/publicdomain/zero/1.0/ to view details).
 -- Maintainer: AbrahamPicos.
--- Contributors: 
+-- Contributors:
 
 -- Corrigiendo un campo faltante en Umbrella.
 ---@class ISMoveableSpriteProps
@@ -18,7 +18,7 @@ local type = type -- El pilar que sostiene a este mod.
 -- Devuélve una tabla si no la había.
 ---@generic T
 ---@param t T La supuesta tabla.
----@return T t Una tabla. 
+---@return T t Una tabla.
 local function secureTable(t)
 
 	if type(t) == "table" then
@@ -156,7 +156,7 @@ end
 ---@return boolean canAction Si se puede realizar una acción sobre el objeto.
 local function checkMultiSpriteObject(moveProps, character, square, object)
 	local grid ---@type SpriteGridCache?
-	
+
 	-- Si el objeto es multi-sprite, obtener su GridCache.
 	if moveProps.isMultiSprite and isCallSecure(moveProps.getSpriteGridInfo) then
 		grid = moveProps.getSpriteGridInfo(moveProps, square, true)
@@ -166,11 +166,11 @@ local function checkMultiSpriteObject(moveProps, character, square, object)
 	for _, member in pairs(grid or {{object = object}}) do
 
 		if not checkObject(character, square, member.object) then
-			
+
 			if isClient() and isCallSecure(character.setHaloNote) then
 				character:setHaloNote("CONTAINER PROTECTED.")
 			end
-			
+
 			return false
 		end
 	end
@@ -227,7 +227,7 @@ end
 ----------------
 
 function ISMoveablesAction:isValid()
-	return OpContainer.moveablesActionIsValid(self)	
+	return OpContainer.moveablesActionIsValid(self)
 end; function ISDestroyStuffAction:isValid()
 	return OpContainer.destroyActionIsValid(self)
 end

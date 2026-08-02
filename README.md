@@ -1,6 +1,6 @@
 # Open Container Protection.
 
-[Español](README.md)
+[Español](README_es.md)
 
 Protect the containers where loot respawns, so that players cannot move or break them.
 

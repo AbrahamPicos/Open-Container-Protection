@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="256"
+   height="256"
+   viewBox="0 0 256 256"
+   version="1.1"
+   id="svg1"
+   inkscape:export-filename="opcontainer_icon.png"
+   inkscape:export-xdpi="12"
+   inkscape:export-ydpi="12"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   sodipodi:docname="dibujo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="2.296875"
+     inkscape:cx="113.19728"
+     inkscape:cy="154.34013"
+     inkscape:window-width="1318"
+     inkscape:window-height="698"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     inkscape:export-bgcolor="#666666ff"
+     showguides="false" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Capa 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(80.108841,163.70068)">
+    <rect
+       style="fill:#666666;fill-opacity:1;stroke-width:0;stroke-dasharray:none"
+       id="rect1"
+       width="256"
+       height="256"
+       x="-81.955978"
+       y="-165.54782" />
+    <path
+       style="fill:#666666;fill-opacity:1;stroke-width:0;stroke-dasharray:none"
+       d="M -80.108841,-35.700685 V -163.70068 H 47.891153 175.89116 V -35.700685 92.29932 H 47.891153 -80.108841 Z"
+       id="path6" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:42.6667px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans Medium';writing-mode:lr-tb;direction:ltr;fill:#ffffff;fill-opacity:1;stroke-width:0;stroke-dasharray:none"
+       x="-72.064369"
+       y="-27.201134"
+       id="text6"><tspan
+         sodipodi:role="line"
+         id="tspan6"
+         x="-72.064369"
+         y="-27.201134">Open</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:24px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans Medium';writing-mode:lr-tb;direction:ltr;fill:#ffffff;fill-opacity:1;stroke-width:0;stroke-dasharray:none"
+       x="-71.220848"
+       y="9.7213078"
+       id="text7"><tspan
+         sodipodi:role="line"
+         id="tspan7"
+         x="-71.220848"
+         y="9.7213078">Container Protection</tspan></text>
+  </g>
+</svg>
