@@ -43,6 +43,6 @@ The cheats needed to bypass the mod's restrictions are:
 
 ##
 
-This mod is 100% human-created and AI contributions are not currently being accepted. It is released under the CC0-1.0 license and is only compatible with the latest version of Project Zomboid: 42.20.0.
+This mod is 100% human-created and AI contributions are not currently being accepted. It is released under the CC0-1.0 license and is only compatible with the latest version of Project Zomboid: 42.20.
 
 Steam Workshop page: https://steamcommunity.com/sharedfiles/filedetails/?id=3774828917
