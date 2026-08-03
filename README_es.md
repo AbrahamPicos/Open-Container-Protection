@@ -10,12 +10,15 @@ Surgió como una alternativa gratuita a los mods de protección de contenedores 
 
 Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escrito completamente desde cero, siguiendo un enfoque radicalmente diferente.
 
+Hasta la fecha, se ha traducido a todas las variantes del español y al inglés.
+
 ## Características:
 
 1. Extremadamente simple, ligero y seguro.
     - Programación defensiva.
     - No requiere configuración.
     - Protección del lado del servidor.
+    - Caché de clases, métodos, y tablas.
     - Consideraciones para contenedores con múltiples sprites.
 
 3. Protección de contenedores en:

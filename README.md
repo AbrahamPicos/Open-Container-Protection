@@ -10,12 +10,15 @@ It emerged as a free alternative to existing container protection mods. Therefor
 
 Although it is inspired by iLusioN's "Container Protection" mod, it has been written completely from scratch, following a radically different approach.
 
+To date, it has been translated into all variants of Spanish and into English.
+
 ## Features:
 
 1. Extremely simple, lightweight, and secure.
     - Defensive programming.
     - Server-side protection.
     - No configuration required.
+    - Cache of classes, methods, and tables.
     - Considerations for containers with multiple sprites.
 
 3. Container protection in:
