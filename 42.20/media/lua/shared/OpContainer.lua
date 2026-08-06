@@ -114,10 +114,11 @@ local getMovePropsFromObject = secureFunction(ISMoveableSpriteProps.fromObject)
 ---------------------------
 
 -- Verifica si un objeto es de interés para este mod.
----@param object IsoObject El objeto que se evaluará.
+---@param object IsoObject? El objeto que se evaluará.
 ---@return boolean isRelevant Si es un objeto relevante.
 local function isRelevantObject(object)
 
+	---@cast object -?
 	-- Validar que el objeto exista, esté en el mundo, que no sea golpeable, y que no haya sido colocado por un jugador.
 	if not instanceof(object, "IsoObject")
 		or not (isCallSecure(object.getSquare) and instanceof(object:getSquare(), "IsoGridSquare"))
@@ -138,8 +139,10 @@ local function isRelevantObject(object)
 	return true
 end
 
--- Verifica si se puede realizar una acción sobre un objeto, según el criterio de este mod, considerando a objetos multi-sprite.
+-- Verifica si se puede realizar una acción sobre un objeto según el criterio de este mod, considerando a objetos multi-sprite.
 -- Los objetos multi-sprite tienen a otros objetos asociados en celdas adyacentes, y deben tratarse como un único objeto.
+---@alias CustomItem {object:IsoObject?}
+---@alias CustomGridCache table<number,CustomItem>
 ---@param moveProps ISMoveableSpriteProps? Las propiedades del sprite asociado al objeto.
 ---@param character IsoPlayer? El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare? La baldosa de mapa donde se encuentra el objeto.
@@ -162,20 +165,28 @@ local function isProtectedObject(moveProps, character, square, object)
 	-- Asegurar y validar caché de cuadrícula.
 	moveProps = secureTable(moveProps or getMovePropsFromObject(object))
 
-	local gridCache = ((moveProps.isMultiSprite and isCallSecure(moveProps.getSpriteGridInfo))
-		and secureTable(moveProps:getSpriteGridInfo(square, true)))
-		or {{object = object}}
+	local grid = secureTable((moveProps.isMultiSprite and isCallSecure(moveProps.getSpriteGridInfo))
+		and moveProps:getSpriteGridInfo(square, true))--[[@as CustomGridCache]]
+	local hasValidGird = false
 
-	if not isTableSecure(gridCache) then
-		return false
+	for _, member in pairs(grid) do
+
+		if secureTable(member).object == object then
+			hasValidGird = true
+			break
+		end
 	end
+
+	if not hasValidGird then
+		grid = {[1] = {object = object}}
+	end ---@cast grid CustomGridCache
 
 	local isRelevant = false
 
 	-- Buscar si alguno de los miembros debería protegerse.
-	for _, member in pairs(gridCache--[[@as SpriteGridCache]])  do
+	for _, member in pairs(grid) do
 
-		if isRelevantObject(member.object) then
+		if isRelevantObject(secureTable(member).object) then
 			isRelevant = true
 			break
 		end
@@ -247,7 +258,7 @@ end
 -- Esto ayuda a diferenciarlos en casos especiales de los objetos que sí deben protegerse, como con los maniquíes.
 ---@param self ISMoveableSpriteProps La clase a la que pertenece la función a la que parcha.
 ---@param square IsoGridSquare La baldosa de mapa donde se colocará el objeto.
----@param item InventoryItem El item que corresponde al objeto que se colocará.
+---@param item InventoryItem El item correspondiente al objeto que se colocará.
 ---@param spriteName string El nombre del sprite del objeto que se colocará.
 function OpContainer.placeMoveableInternal(self, square, item, spriteName)
 	local object = Legacy.placeMoveableInternal(self, square, item, spriteName)
@@ -262,11 +273,10 @@ function OpContainer.placeMoveableInternal(self, square, item, spriteName)
 
 	local modData = object:getModData()
 
-	if modData.IsPlayerPlaced--[[@as boolean]] then
-		return object
+	if not modData.IsPlayerPlaced--[[@as boolean]] then
+		modData.IsPlayerPlaced = true; object:transmitModData()
 	end
 
-	modData.IsPlayerPlaced = true; object:transmitModData()
 	return object
 end
 
