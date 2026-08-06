@@ -1,4 +1,4 @@
-name=Open Container Protection.
+name=Open Container Protection
 id=opcontainer
 
 description=Protect your server's containers so you don't run out of loot.
@@ -7,5 +7,5 @@ icon=opcontainer_icon.png
 
 versionMin=42.20
 
-modversion=0.3
+modversion=0.4
 author=PatagoniaPZ-Comunity
