@@ -1,0 +1,9 @@
+{
+    "Sandbox_OpContainer": "Open Container Protection",
+
+    "Sandbox_OpContainer_safeHousePermission": "Allow in safehouses",
+    "Sandbox_OpContainer_safeHousePermission_tooltip": "The mod will allow you to modify the containers where loot respawns, provided they are located inside your safehouse.",
+
+    "Sandbox_OpContainer_safeHouseCooldown": "Safehouse cooldown",
+    "Sandbox_OpContainer_safeHouseCooldown_tooltip": "Once that time (in minutes) has elapsed, the mod will allow you to modify the containers inside your new safehouse."
+}

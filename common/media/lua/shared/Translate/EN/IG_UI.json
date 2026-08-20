@@ -1,3 +1,4 @@
 {
-    "IGUI_HaloNote_OpContainer_Protected": "Protected container."
+    "IGUI_HaloNote_OpContainer_Protected": "Protected container.",
+    "IGUI_HaloNote_OpContainer_SafeHouseCooldown": "Minutes of cooldown remaining: %1"
 }

@@ -1,0 +1,21 @@
+VERSION = 1,
+
+option OpContainer.safeHousePermission
+{
+    type = boolean,
+    default = true,
+
+    page = OpContainer,
+    translation = OpContainer_safeHousePermission,
+}
+
+option OpContainer.safeHouseCooldown
+{
+    type = integer,
+    default = 20,
+    min = 0,
+    max = 10080,
+
+    page = OpContainer,
+    translation = OpContainer_safeHouseCooldown,
+}

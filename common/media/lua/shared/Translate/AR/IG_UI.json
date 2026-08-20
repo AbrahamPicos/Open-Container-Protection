@@ -1,3 +1,4 @@
 {
-    "IGUI_HaloNote_OpContainer_Protected": "Contenedor protegido."
+    "IGUI_HaloNote_OpContainer_Protected": "Contenedor protegido.",
+    "IGUI_HaloNote_OpContainer_SafeHouseCooldown": "Minutos de tiempo de reutilización restantes: %1"
 }

@@ -1,6 +1,6 @@
 # Open Container Protection.
 
-[Español](README_es.md)
+English | [Español](README_es.md)
 
 Protect the containers where loot respawns, so that players cannot move or break them.
 
@@ -36,6 +36,16 @@ To date, it has been translated into all variants of Spanish and into English.
     - They are inside the player's safe house.
     - The player is an administrator using cheats.
 
+## Sandbox options:
+
+1. Allow in safehouses:
+    - The mod will allow you to modify the containers where loot respawns, provided they are located inside your safehouse.
+    - Default: true.
+
+2. Safehouse cooldown:
+    - Once that time (in minutes) has elapsed, the mod will allow you to modify the containers inside your new safehouse.
+    - Default: 20.
+
 ##
 
 The cheats needed to bypass the mod's restrictions are:
@@ -47,6 +57,6 @@ The cheats needed to bypass the mod's restrictions are:
 
 This mod is 100% human-created and AI contributions are not currently being accepted. It is released under the CC0-1.0 license and is only compatible with the latest version of Project Zomboid: 42.20.
 
-Latest tested version of Project Zomboid: 42.20.2
+Latest tested version of Project Zomboid: 42.20.3
 
 Steam Workshop page: https://steamcommunity.com/sharedfiles/filedetails/?id=3774828917

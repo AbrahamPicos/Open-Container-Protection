@@ -1,0 +1,9 @@
+{
+    "Sandbox_OpContainer": "Open Container Protection",
+
+    "Sandbox_OpContainer_safeHousePermission": "Permitir en refugios",
+    "Sandbox_OpContainer_safeHousePermission_tooltip": "El mod te permitirá modificar los contenedores donde reaparece el botín, siempre y cuando se encuentren dentro de tu refugio.",
+
+    "Sandbox_OpContainer_safeHouseCooldown": "Tiempo de reutilización del refugio.",
+    "Sandbox_OpContainer_safeHouseCooldown_tooltip": "Una vez transcurrido ese tiempo (en minutos), el mod te permitirá modificar los contenedores dentro de tu nuevo refugio."
+}

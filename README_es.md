@@ -1,12 +1,12 @@
 # Open Container Protection.
 
-[English](README.md)
+[English](README.md) | Español
 
 Protege los contenedores donde reaparece el botín, para que los jugadores no puedan moverlos ni romperlos.
 
 A diferencia de otros mods de protección de contenedores, este está diseñado para proteger todos los contenedores que no hayan sido colocados por los jugadores, por lo que protegerá cualquier contenedor en cualquier lugar del mapa.
 
-Surgió como una alternativa gratuita a los mods de protección de contenedores existentes. Por lo tanto, a diferencia de esos mods, puedes hacer lo que quieras con él sin necesidad de dar crédito a los colaboradores.
+Surgió como una alternativa libre a los mods de protección de contenedores existentes. Por lo tanto, a diferencia de esos mods, puedes hacer lo que quieras con él sin necesidad de dar crédito a los colaboradores.
 
 Aunque está inspirado en el mod "Container Protection" de iLusioN, ha sido escrito completamente desde cero, siguiendo un enfoque radicalmente diferente.
 
@@ -33,8 +33,18 @@ Hasta la fecha, se ha traducido a todas las variantes del español y al inglés.
 
 4. Excepciones a la protección de contenedores si:
     - Un jugador los colocó.
-    - Están dentro de la casa segura del jugador.
+    - Están dentro del refugio del jugador.
     - El jugador es un administrador que usa trucos.
+
+## Opciones de sandbox:
+
+1. Permitir en refugios:
+    - El mod te permitirá modificar los contenedores donde reaparece el botín, siempre y cuando se encuentren dentro de tu refugio.
+    - Predeterminado: verdadero.
+
+2. Tiempo de reutilización del refugio:
+    - Una vez transcurrido ese tiempo (en minutos), el mod te permitirá modificar los contenedores dentro de tu nuevo refugio.
+    - Predeterminado: 20.
 
 ##
 
@@ -47,6 +57,6 @@ Los trucos necesarios para sortear las restricciones del mod son:
 
 Este mod es 100% creado por humanos y actualmente no se aceptan contribuciones de IA. Se publica bajo la licencia CC0-1.0 y solo es compatible con la última versión de Project Zomboid: 42.20.
 
-Última versión probada de Project Zomboid: 42.20.2
+Última versión probada de Project Zomboid: 42.20.3
 
 Página de Steam Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3774828917
