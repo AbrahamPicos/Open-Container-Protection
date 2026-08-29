@@ -5,13 +5,13 @@
 
 require("OpContainer_secureUtils")
 
-if not _07ca70cd7c514861b4b3897cbf56f40a then return end
+local utils = _07ca70cd7c514861b4b3897cbf56f40a
+
+if not utils then return end
 
 -----------------------------------------
 -- Caché de clases, métodos, y tablas: --
 -----------------------------------------
-
-local utils = _07ca70cd7c514861b4b3897cbf56f40a
 
 local math = utils.math
 
@@ -46,9 +46,10 @@ local OpContainer = utils.OpContainer
 ---@class OPCOptions
 ---@field safeHouseCooldown integer
 ---@field safeHousePermission boolean
+---@field vehicleInteriorPermission boolean
 
 local SafeHouse = OpContainer.SafeHouse
-local Options = OpContainer.SandboxVars.OpContainer--[[@as OPCOptions]]
+local Options = secureTable(OpContainer.SandboxVars.OpContainer--[[@as OPCOptions]])
 local BlockedMoveableModes = {pickup = true, rotate = true, scrap = true}
 
 local ISMoveablesAction = OpContainer.ISMoveablesAction
@@ -78,35 +79,50 @@ local ISMoveableDefinitions = OpContainer.ISMoveableDefinitions
 -- Verifica si un objeto es de interés para este mod.
 ---@param object IsoObject? El objeto que se evaluará.
 ---@return boolean isRelevant Si es un objeto relevante.
-local function isRelevantObject(object)
+local function isObjectRelevant(object)
 
-	-- Validar objeto, que el objeto no sea golpeable, y no haya sido colocado por un jugador.
+	-- Validar objeto, que el objeto no sea golpeable, y que no haya sido colocado por un jugador.
 	---@cast object -?
 	if not instanceof(object, "IsoObject")
 		or instanceof(object, "IsoThumpable")
 		or (isCallSecure(object.isMovedThumpable) and object:isMovedThumpable())
-		or (isCallSecure(object.getModData) and object:getModData().isPlayerPlaced)
+		or (isCallSecure(object.getModData) and secureTable(object:getModData()).isPlayerPlaced)
 	then
 		return false
 	end
 
-	local containerCount = isCallSecure(object.getContainerCount) and object:getContainerCount()
+	local containersCount = isCallSecure(object.getContainerCount) and object:getContainerCount()
 
 	-- Validar que el objeto tenga al menos un contenedor.
-	if not isNumberSecure(containerCount) or containerCount < 1 then
+	if not isNumberSecure(containersCount) or containersCount < 1 then
 		return false
 	end
 
+	-- Devolver verdadero.
 	return true
+end
+
+function ISBuildAction:perform()
 end
 
 -- Verifica si el jugador debería tener permitido alterar un objeto en una baldosa en específico.
 ---@param character IsoPlayer El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare La baldosa de mapa donde se encuentra el objeto.
 ---@return boolean isPlayerAllowed Si se permite la alteración.
----@return string? msg Un mensaje, si debe mostrarse un mensaje al usuario por esto.
+---@return string? msg Un mensaje, si debería mostrarse un mensaje al usuario por esto.
 local function isPlayerAllowedOnSquare(character, square)
-	local safehouse = isCallSecure(SafeHouse.getSafeHouse) and SafeHouse.getSafeHouse(square)
+
+	-- Si el jugador está en un interior del mod Project RV Interior, permitir.
+	if Options.vehicleInteriorPermission and (isCallSecure(character.getX) and isCallSecure(character.getY)) then
+		local x, y = character:getX(), character:getY()
+
+		if (isNumberSecure(x) and isNumberSecure(y)) and (x > 22500 and y > 12000) then
+			return true
+		end
+	end
+
+	local safehouse = (Options.safeHousePermission and isCallSecure(SafeHouse.getSafeHouse))
+		and SafeHouse.getSafeHouse(square) or nil
 
 	-- Validar que el objeto esté en una safehouse, y el jugador esté permitido en ella.
 	---@cast safehouse -?
@@ -121,8 +137,8 @@ local function isPlayerAllowedOnSquare(character, square)
 	local cooldown = Options.safeHouseCooldown
 	local created = safehouse:getDatetimeCreated()
 
-	-- Validar que ya haya pasado el tiempo de enfriamiento de la safehouse.
-	if not isNumberSecure(current) or not isNumberSecure(created) or not isNumberSecure(cooldown)
+	-- Validar que ya haya pasado el tiempo de espera de la safehouse.
+	if not (isNumberSecure(current) and isNumberSecure(created) and isNumberSecure(cooldown))
 		or not (isCallSecure(math.abs) and isCallSecure(math.floor))
 	then
 		return false
@@ -137,6 +153,7 @@ local function isPlayerAllowedOnSquare(character, square)
 		))))
 	end
 
+	-- Devolver verdadero.
 	return true
 end
 
@@ -145,7 +162,7 @@ end
 ------------------------
 
 ---@alias CustomItem {object:IsoObject?} -- Un objeto del grupo de un objeto multi-sprite.
----@alias CustomGridCache CustomItem[] -- La parte de gridCache que le interesa a este mod.
+---@alias CustomGridCache CustomItem[] -- La parte de SpriteGridCache que le interesa a este mod.
 
 -- Verifica si se puede realizar una acción sobre un objeto según el criterio de este mod, considerando a objetos multi-sprite.
 -- Los objetos multi-sprite tienen a otros objetos asociados en celdas adyacentes, y deben tratarse como un único objeto.
@@ -153,37 +170,39 @@ end
 ---@param character IsoPlayer? El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare? La baldosa de mapa donde se encuentra el objeto.
 ---@param moveProps ISMoveableSpriteProps? Las propiedades del sprite asociado al objeto.
----@return boolean isProtectedObject Si el objeto será protegido por este mod.
-local function isProtectedObject(object, character, square, moveProps)
+---@return boolean isObjectProtected Si el objeto será protegido por este mod.
+local function isObjectProtected(object, character, square, moveProps)
 
 	-- Validar entorno y objeto.
 	if not (isClient() or isServer()) or not instanceof(object, "IsoObject") then
 		return false
 	end ---@cast object -?
 
+	-- Asegurar baldosa.
 	square = square or (isCallSecure(object.getSquare) and object:getSquare())
 	square = (instanceof(square, "IsoGridSquare") and square) or nil
 
-	-- Asegurar y validar caché de cuadrícula.
+	-- Asegurar las propiedades del sprite asociado objeto.
 	moveProps = secureTable(moveProps or (
 		isCallSecure(ISMoveableSpriteProps.fromObject) and ISMoveableSpriteProps.fromObject(object)
 	))--[[@as ISMoveableSpriteProps]]
 
 	local isRelevant = false
 
-	-- Buscar si alguno de los miembros es relevante, lo que vuelve relevante al objeto.
+	-- Asegurar caché de cuadrícula, y buscar si alguno de los miembros es relevante (lo que vuelve relevante al objeto).
 	for _, member in pairs(secureTable(((moveProps.isMultiSprite and isCallSecure(moveProps.getSpriteGridInfo))
 		and (square and moveProps:getSpriteGridInfo(square, true))) or {{object = object}}
 	)--[[@as CustomGridCache]]) do
 
-		if isRelevantObject(secureTable(member).object) then
+		if isObjectRelevant(secureTable(member).object) then
 			isRelevant = true
 			break
 		end
 	end
 
-	-- Si el objeto no es relevante, no hay un jugador, o no hay baldosa, devolver si es un objeto relevante.
-	if not isRelevant or not instanceof(character, "IsoPlayer")
+	-- Si el objeto no es relevante, no hay jugador, o no hay baldosa, devolver si es un objeto relevante.
+	if not isRelevant
+		or not instanceof(character, "IsoPlayer")
 		or not instanceof(square, "IsoGridSquare")
 	then
 		return isRelevant
@@ -192,17 +211,18 @@ local function isProtectedObject(object, character, square, moveProps)
 	local isAllowed, msg = isPlayerAllowedOnSquare(character, square)
 
 	-- Validar que el jugador no esté permitido en la baldosa.
-	if Options.safeHousePermission and isAllowed then
+	if isAllowed then
 		return false
 	end
 
-	-- Si se está del lado del cliente, notificar al usuario sobre el objeto protegido.
+	-- Si se está del lado del cliente, notificar al jugador la razón.
 	if isClient() and isCallSecure(character.setHaloNote) then
 		character:setHaloNote(
 			msg or tostring(getText("IGUI_HaloNote_OpContainer_Protected")), 255, 0, 0, 200
 		)
 	end
 
+	-- Devolver verdadero.
 	return true
 end
 
@@ -211,31 +231,36 @@ end
 --------------
 
 -- Se aplica a ISMoveablesAction:isValid.
--- Valida si un objeto puede recogerse, rotarse, y desmontarse, pero ahora protege los contenedores con reloot.
+-- Valida si un objeto puede recogerse, rotarse, y desmantelarse. según el criterio de este mod.
 ---@param self ISMoveablesAction Una instancia de la clase a la que pertenece la función a la que parcha.
 ---@return boolean isValid Si la acción es válida.
 function OpContainer.moveablesActionIsValid(self)
 	local isValid = Legacy.moveableIsValid(self)
 	local character = self.character
 
-	if not isValid or not BlockedMoveableModes[self.mode] or ISMoveableDefinitions.cheat
+	-- Si la acción no es válida, el modo no está bloqueado, no hay jugador, o el jugador está usando el MoveablesCheat,
+	--- devolver si la acción es válida.
+	if not isValid
+		or not BlockedMoveableModes[self.mode] or ISMoveableDefinitions.cheat
 		or not instanceof(character, "IsoPlayer")
 		or (isCallSecure(character.isMovablesCheat) and character:isMovablesCheat())
 	then
 		return isValid
 	end
 
-	return not isProtectedObject(self.object, character, self.square, self.moveProps)
+	-- Devolver si el objeto está protegido por este mod.
+	return not isObjectProtected(self.object, character, self.square, self.moveProps)
 end
 
 -- Se aplica a ISDestroyStuffAction:isValid.
--- Valida si un objeto puede ser destruído con una almádena, pero ahora protege los contenedores con reloot.
+-- Valida si un objeto puede ser destruído con una almádena, según el criterio de este mod.
 ---@param self ISDestroyStuffAction Una instancia de la clase a la que pertenece la función a la que parcha.
 ---@return boolean isValid Si la acción es válida.
 function OpContainer.destroyActionIsValid(self)
 	local isValid = Legacy.destroyIsValid(self)
 	local character = self.character
 
+	-- Si la acción no es válida, no hay jugador, o el jugador está usando el BuildCheat, devolver si la acción es válida.
 	if not isValid
 		or not instanceof(character, "IsoPlayer")
 		or (isCallSecure(character.isBuildCheat) and character:isBuildCheat())
@@ -243,34 +268,38 @@ function OpContainer.destroyActionIsValid(self)
 		return isValid
 	end
 
-	return not isProtectedObject(self.item, character, nil, nil)
+	-- Devolver si el objeto está protegido por este mod.
+	return not isObjectProtected(self.item, character, nil, nil)
 end
 
 -- Se aplica a ISMoveableSpriteProps:placeMoveableInternal.
 -- Marca como isPlayerPlaced a todos los objetos de interés colocados que no se vuelven golpeables al colocarlos.
 -- Esto ayuda a diferenciarlos en casos especiales de los objetos que sí deben protegerse, como con los maniquíes.
 ---@param self ISMoveableSpriteProps Una instancia de la clase a la que pertenece la función a la que parcha.
----@param square IsoGridSquare La baldosa de mapa donde se colocará el objeto.
+---@param square IsoGridSquare La baldosa de mapa donde se colocará al objeto.
 ---@param item InventoryItem El item correspondiente al objeto que se colocará.
 ---@param spriteName string El nombre del sprite del objeto que se colocará.
 ---@return IsoObject? object El objeto que fue colocado.
 function OpContainer.placeMoveableInternal(self, square, item, spriteName)
 	local object = Legacy.placeMoveableInternal(self, square, item, spriteName)
 
+	-- Si no se está del lado del servidor, o el objeto no es relevante, devolver el objeto.
 	---@cast object -?
 	if not isServer()
-		or not isProtectedObject(object, nil, square, nil)
+		or not isObjectProtected(object, nil, square, nil) -- Esto también valida al objeto.
 		or not (isCallSecure(object.getModData) and isCallSecure(object.transmitModData))
 	then
 		return object
 	end
 
-	local modData = object:getModData()--[[@as {isPlayerPlaced:boolean}]]
+	local modData = secureTable(object:getModData())--[[@as {isPlayerPlaced:boolean}]]
 
+	-- Si el objeto aún no estaba marcado como colocado por un jugador, marcar, y sincronizar con los clientes.
 	if not modData.isPlayerPlaced then
 		modData.isPlayerPlaced = true; object:transmitModData()
 	end
 
+	-- Devolver objeto.
 	return object
 end
 
@@ -283,6 +312,7 @@ end
 -- En shared/Moveables/ISMoveableSpriteProps.lua
 -- En shared/TimedActions/ISDestroyStuffAction.lua
 
+-- Si aún no se ha hecho, aplicar los parches usando la técnica de monkey patching.
 if not OpContainer.isGamePatched--[[@as boolean]] then
 
 	function ISMoveablesAction:isValid()
@@ -293,12 +323,16 @@ if not OpContainer.isGamePatched--[[@as boolean]] then
 		return OpContainer.placeMoveableInternal(self, _square, _item, _spriteName)
 	end
 
-	OpContainer.isGamePatched = true
+	OpContainer.isGamePatched = true -- Previene inconsistencias graves si el archivo es recargado.
 end
 
 print("[OpContainer]: Loaded and ready.")
 
+-- La opción para no proteger los contenedores en los interiores del mod "Project RV Interior" dejará sin proteger a todos
+--- los contenedores en esas habitaciones. Hace falta una integración con un mod de protección de vehículos para sólo permitir
+--- al jugador en los contenedores que le corresponden.
+
 -- Los últimos commits solucionaron las inconsistencias leves reportadas previamente, pero mientras lo hacía, accidentalmente
 --- removí cualquier protección del lado del servidor. De cualquier forma, esta protección no era más que un placebo debido a
---- que los contenedores aún podían destruírse con paquetes "falsos", así que no lo considero un problema crítico. Sin embargo,
---- entiendo que debería solucionarlo en los próximos meses.
+--- que los contenedores aún podían destruirse con paquetes "falsos", -lo que ocurre en todos los mods de este tipo-, así que no
+--- lo considero un problema crítico. Sin embargo, entiendo que debería solucionarlo en los próximos meses.

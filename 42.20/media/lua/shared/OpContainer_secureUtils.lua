@@ -98,5 +98,5 @@ utils.table = secureTable(table)
 utils.string = secureTable(string)
 utils.coroutine = secureTable(coroutine)
 
--- Tenga encuenta que las funciones seguras devolverán false como fallback, así que debe asegurarse añadir alternativas
---- cuando espere algo más que un boleano, como `tostring(value) or ""`.
+-- Tenga en cuenta que las funciones seguras devolverán false como fallback, así que debe asegurarse de añadir alternativas
+--- cuando espere algo más que un booleano, como `tostring(value) or ""`.

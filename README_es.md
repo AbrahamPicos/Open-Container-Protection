@@ -29,7 +29,7 @@ Hasta la fecha, se ha traducido a todas las variantes del español y al inglés.
     - Rotar.
     - Recoger.
     - Desmantelar.
-    - Destruir con un mazo.
+    - Destruir con una almádena.
 
 4. Excepciones a la protección de contenedores si:
     - Un jugador los colocó.
@@ -39,24 +39,28 @@ Hasta la fecha, se ha traducido a todas las variantes del español y al inglés.
 ## Opciones de sandbox:
 
 1. Permitir en refugios:
-    - El mod te permitirá modificar los contenedores donde reaparece el botín, siempre y cuando se encuentren dentro de tu refugio.
+    - El mod te permitirá mover o romper contenedores donde reaparece el botín, siempre que se encuentren dentro de tu refugio.
     - Predeterminado: verdadero.
 
-2. Tiempo de reutilización del refugio:
-    - Una vez transcurrido ese tiempo (en minutos), el mod te permitirá modificar los contenedores dentro de tu nuevo refugio.
+2. Tiempo de espera del refugio:
+    - Una vez transcurrido este tiempo (en minutos), el mod te permitirá mover o romper contenedores donde reaparece el botín dentro de tu nuevo refugio.
     - Predeterminado: 20.
+
+3. Permitir en interiores de vehículos:
+    - El mod te permitirá mover o romper contenedores donde reaparece el botín, siempre que se encuentren dentro de un vehículo (mod Project RV Interior).
+    - Default: true.
 
 ##
 
 Los trucos necesarios para sortear las restricciones del mod son:
 
 - `BuildCheat`: Para destruir.
-- `MoveableCheat`: Para rotar, recoger y desmontar.
+- `MovablesCheat`: Para rotar, recoger, y desmantelar.
 
 ##
 
 Este mod es 100% creado por humanos y actualmente no se aceptan contribuciones de IA. Se publica bajo la licencia CC0-1.0 y solo es compatible con la última versión de Project Zomboid: 42.20.
 
-Última versión probada de Project Zomboid: 42.20.3
+Última versión probada de Project Zomboid: 42.20.4
 
 Página de Steam Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3774828917

@@ -39,24 +39,28 @@ To date, it has been translated into all variants of Spanish and into English.
 ## Sandbox options:
 
 1. Allow in safehouses:
-    - The mod will allow you to modify the containers where loot respawns, provided they are located inside your safehouse.
+    - The mod will allow you to move or break containers where loot respawns, provided they are located inside your safehouse.
     - Default: true.
 
 2. Safehouse cooldown:
-    - Once that time (in minutes) has elapsed, the mod will allow you to modify the containers inside your new safehouse.
+    - Once this time has elapsed (in minutes), the mod will allow you to move or break containers where loot respawns inside your new safehouse.
     - Default: 20.
+
+3. Allow in vehicle interiors:
+    - The mod will allow you to move or break containers where loot respawns, provided they are located inside a vehicle (Project RV Interior mod).
+    - Default: true.
 
 ##
 
 The cheats needed to bypass the mod's restrictions are:
 
 - `BuildCheat`: To destroy.
-- `MoveableCheat`: To rotate, pick up, and disassemble.
+- `MovablesCheat`: To rotate, pick up, and dismantle.
 
 ##
 
 This mod is 100% human-created and AI contributions are not currently being accepted. It is released under the CC0-1.0 license and is only compatible with the latest version of Project Zomboid: 42.20.
 
-Latest tested version of Project Zomboid: 42.20.3
+Latest tested version of Project Zomboid: 42.20.4
 
 Steam Workshop page: https://steamcommunity.com/sharedfiles/filedetails/?id=3774828917

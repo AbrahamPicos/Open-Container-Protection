@@ -19,3 +19,12 @@ option OpContainer.safeHouseCooldown
     page = OpContainer,
     translation = OpContainer_safeHouseCooldown,
 }
+
+option OpContainer.vehicleInteriorPermission
+{
+    type = boolean,
+    default = true,
+
+    page = OpContainer,
+    translation = OpContainer_vehicleInteriorPermission,
+}
