@@ -102,9 +102,6 @@ local function isObjectRelevant(object)
 	return true
 end
 
-function ISBuildAction:perform()
-end
-
 -- Verifica si el jugador debería tener permitido alterar un objeto en una baldosa en específico.
 ---@param character IsoPlayer El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare La baldosa de mapa donde se encuentra el objeto.
