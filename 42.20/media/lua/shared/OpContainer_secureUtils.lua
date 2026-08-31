@@ -53,6 +53,7 @@ end
 
 local isCallSecure = utils.isCallSecure
 local isTableSecure = utils.isTableSecure
+local isNumberSecure = utils.isNumberSecure
 
 -- Devuelve una tabla si no la había.
 ---@generic T
@@ -78,6 +79,31 @@ function utils.secureFunction(f)
 	end
 
 	return function (...) return false end
+end
+
+-- Devuelve un número si no lo había.
+---@generic N
+---@param n N El supuesto número.
+---@return N number Un número.
+function utils.secureNumber(n)
+	if isNumberSecure(n) then
+		return n
+	end
+
+	return 0
+end
+
+-- Devuelve una cadena si no la había.
+---@generic S
+---@param s S La supuesta cadena.
+---@return S string Una cadena.
+function utils.secureString(s)
+
+	if type(s) == "string" then
+		return s
+	end
+
+	return "ERROR"
 end
 
 --------------------------

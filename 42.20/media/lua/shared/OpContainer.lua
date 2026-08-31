@@ -17,8 +17,9 @@ local math = utils.math
 
 local pairs = utils.pairs
 local print = utils.print
-local tostring = utils.tostring
 local secureTable = utils.secureTable
+local secureNumber = utils.secureNumber
+local secureString = utils.secureString
 local secureFunction = utils.secureFunction
 local isCallSecure = utils.isCallSecure
 local isNumberSecure = utils.isNumberSecure
@@ -31,6 +32,7 @@ utils.OpContainer = utils.OpContainer or {
 	ISMoveablesAction = secureTable(ISMoveablesAction),
 	ISDestroyStuffAction = secureTable(ISDestroyStuffAction),
 	ISMoveableSpriteProps = secureTable(ISMoveableSpriteProps),
+	ISRemoveCampfireAction = secureTable(ISRemoveCampfireAction),
 
 	getText = secureFunction(getText),
 	isClient = secureFunction(isClient),
@@ -55,6 +57,7 @@ local BlockedMoveableModes = {pickup = true, rotate = true, scrap = true}
 local ISMoveablesAction = OpContainer.ISMoveablesAction
 local ISDestroyStuffAction = OpContainer.ISDestroyStuffAction
 local ISMoveableSpriteProps = OpContainer.ISMoveableSpriteProps
+local ISRemoveCampfireAction = OpContainer.ISRemoveCampfireAction
 
 local getText = OpContainer.getText
 local isClient = OpContainer.isClient
@@ -65,7 +68,8 @@ local getTimestampMs = OpContainer.getTimestampMs
 OpContainer.Legacy = OpContainer.Legacy or {
 
 	moveableIsValid = secureFunction(ISMoveablesAction.isValid),
-	destroyIsValid = secureFunction(ISDestroyStuffAction.isValid), ---@diagnostic disable-next-line: param-type-mismatch
+	destroyIsValid = secureFunction(ISDestroyStuffAction.isValid),
+	removeCampfireIsValid = secureFunction(ISRemoveCampfireAction.isValid),---@diagnostic disable-next-line: param-type-mismatch
 	placeMoveableInternal = secureFunction(ISMoveableSpriteProps.placeMoveableInternal)
 }
 
@@ -142,12 +146,12 @@ local function isPlayerAllowedOnSquare(character, square)
 	end
 
 	local elapsed = ((current - created) / 1000 / 60) - cooldown
-	local elapsedFloor = math.floor(elapsed)
 
 	if elapsed < 0 then
-		return false, tostring(getText("IGUI_HaloNote_OpContainer_SafeHouseCooldown", tostring(math.abs(
-			(isNumberSecure(elapsedFloor) and elapsedFloor) or 0
-		))))
+		return false, secureString(
+			getText("IGUI_HaloNote_OpContainer_SafeHouseCooldown",
+			secureNumber(math.abs(secureNumber(math.floor(elapsed)))))
+		)
 	end
 
 	-- Devolver verdadero.
@@ -180,9 +184,9 @@ local function isObjectProtected(object, character, square, moveProps)
 	square = (instanceof(square, "IsoGridSquare") and square) or nil
 
 	-- Asegurar las propiedades del sprite asociado objeto.
-	moveProps = secureTable(moveProps or (
-		isCallSecure(ISMoveableSpriteProps.fromObject) and ISMoveableSpriteProps.fromObject(object)
-	))--[[@as ISMoveableSpriteProps]]
+	moveProps = secureTable(moveProps
+		or (isCallSecure(ISMoveableSpriteProps.fromObject) and ISMoveableSpriteProps.fromObject(object))
+	)--[[@as ISMoveableSpriteProps]]
 
 	local isRelevant = false
 
@@ -214,8 +218,8 @@ local function isObjectProtected(object, character, square, moveProps)
 
 	-- Si se está del lado del cliente, notificar al jugador la razón.
 	if isClient() and isCallSecure(character.setHaloNote) then
-		character:setHaloNote(
-			msg or tostring(getText("IGUI_HaloNote_OpContainer_Protected")), 255, 0, 0, 200
+		character:setHaloNote(secureString(
+			msg or getText("IGUI_HaloNote_OpContainer_Protected")), 255, 0, 0, 200
 		)
 	end
 
@@ -300,6 +304,27 @@ function OpContainer.placeMoveableInternal(self, square, item, spriteName)
 	return object
 end
 
+-- Valida si una hoguera puede ser recogida, según el criterio de este mod.
+---@param self ISRemoveCampfireAction Una instancia de la clase a la que pertenece la función a la que parcha.
+---@return boolean isValid Si la acción es válida.
+function OpContainer.removeCampfireActionIsValid(self)
+	local isValid = Legacy.removeCampfireIsValid(self)
+	local character = self.character
+	local campfire = secureTable(self.campfire)
+
+	-- Si la acción no es válida no hay jugador, o el jugador está usando el MoveablesCheat, devolver si la acción es válida.
+	if not isValid or ISMoveableDefinitions.cheat
+		or not instanceof(character, "IsoPlayer")
+		or (isCallSecure(character.isMovablesCheat) and character:isMovablesCheat())
+		or not isCallSecure(campfire.getObject)
+	then
+		return isValid
+	end
+
+	-- Devolver si el objeto está protegido por este mod.
+	return not isObjectProtected(campfire:getObject(), character, nil, nil)
+end
+
 ----------------
 -- Enganches: --
 ----------------
@@ -308,6 +333,7 @@ end
 -- En shared/Moveables/ISMoveablesAction.lua
 -- En shared/Moveables/ISMoveableSpriteProps.lua
 -- En shared/TimedActions/ISDestroyStuffAction.lua
+-- En shared/Camping/TimedActions/ISRemoveCampfireAction.lua
 
 -- Si aún no se ha hecho, aplicar los parches usando la técnica de monkey patching.
 if not OpContainer.isGamePatched--[[@as boolean]] then
@@ -316,7 +342,9 @@ if not OpContainer.isGamePatched--[[@as boolean]] then
 		return OpContainer.moveablesActionIsValid(self)
 	end; function ISDestroyStuffAction:isValid()
 		return OpContainer.destroyActionIsValid(self)
-	end; function ISMoveableSpriteProps:placeMoveableInternal(_square, _item, _spriteName)
+	end; function ISRemoveCampfireAction:isValid()
+		return OpContainer.removeCampfireActionIsValid(self)
+	end;function ISMoveableSpriteProps:placeMoveableInternal(_square, _item, _spriteName)
 		return OpContainer.placeMoveableInternal(self, _square, _item, _spriteName)
 	end
 

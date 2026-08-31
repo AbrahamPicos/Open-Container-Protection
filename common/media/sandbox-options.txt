@@ -23,7 +23,7 @@ option OpContainer.safeHouseCooldown
 option OpContainer.vehicleInteriorPermission
 {
     type = boolean,
-    default = true,
+    default = false,
 
     page = OpContainer,
     translation = OpContainer_vehicleInteriorPermission,

@@ -48,7 +48,7 @@ Hasta la fecha, se ha traducido a todas las variantes del español y al inglés.
 
 3. Permitir en interiores de vehículos:
     - El mod te permitirá mover o romper contenedores donde reaparece el botín, siempre que se encuentren dentro de un vehículo (mod Project RV Interior).
-    - Default: true.
+    - Predeterminado: verdadero.
 
 ##
 

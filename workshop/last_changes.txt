@@ -1,0 +1,9 @@
+[b]Project RV Interior compat added: v0.6[/b]
+[list]
+[*]Added initial support for the Project RV Interior mod.
+[*]Added a new sandbox option to toggle compatibility with the Project RV Interior mod.
+[*]Added missing translations for the new sandbox option.
+[*]Improved all translations.
+[*]Made code style and security improvements.
+[*]Fixed an issue where protected campfires could still be picked up via the context menu.
+[/list]
