@@ -19,6 +19,7 @@ Hasta la fecha, se ha traducido a todas las variantes del español y al inglés.
     - No requiere configuración.
     - Protección del lado del servidor.
     - Caché de clases, métodos, y tablas.
+    - Seguro de agregar/quitar con guardados existentes.
     - Consideraciones para contenedores con múltiples sprites.
 
 3. Protección de contenedores en:
@@ -48,7 +49,7 @@ Hasta la fecha, se ha traducido a todas las variantes del español y al inglés.
 
 3. Permitir en interiores de vehículos:
     - El mod te permitirá mover o romper contenedores donde reaparece el botín, siempre que se encuentren dentro de un vehículo (mod Project RV Interior).
-    - Predeterminado: verdadero.
+    - Predeterminado: falso.
 
 ##
 
@@ -59,8 +60,8 @@ Los trucos necesarios para sortear las restricciones del mod son:
 
 ##
 
-Este mod es 100% creado por humanos y actualmente no se aceptan contribuciones de IA. Se publica bajo la licencia CC0-1.0 y solo es compatible con la última versión de Project Zomboid: 42.20.
+Este mod es 100% creado por humanos y actualmente no se aceptan contribuciones de IA. Se publica bajo la licencia CC0-1.0 y solo es compatible con las últimas versiónes de Project Zomboid: 42.20-42.21.
 
-Última versión probada de Project Zomboid: 42.20.4
+Última versión probada de Project Zomboid: 42.21.0
 
 Página de Steam Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3774828917

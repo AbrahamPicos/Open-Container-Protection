@@ -19,6 +19,7 @@ To date, it has been translated into all variants of Spanish and into English.
     - Server-side protection.
     - No configuration required.
     - Cache of classes, methods, and tables.
+    - Safe to add/remove with existing saves.
     - Considerations for containers with multiple sprites.
 
 3. Container protection in:
@@ -48,7 +49,7 @@ To date, it has been translated into all variants of Spanish and into English.
 
 3. Allow in vehicle interiors:
     - The mod will allow you to move or break containers where loot respawns, provided they are located inside a vehicle (Project RV Interior mod).
-    - Default: true.
+    - Default: false.
 
 ##
 
@@ -59,8 +60,8 @@ The cheats needed to bypass the mod's restrictions are:
 
 ##
 
-This mod is 100% human-created and AI contributions are not currently being accepted. It is released under the CC0-1.0 license and is only compatible with the latest version of Project Zomboid: 42.20.
+This mod is 100% human-created and AI contributions are not currently being accepted. It is released under the CC0-1.0 license and is only compatible with the latest versions of Project Zomboid: 42.20-42.21.
 
-Latest tested version of Project Zomboid: 42.20.4
+Latest tested version of Project Zomboid: 42.21.0
 
 Steam Workshop page: https://steamcommunity.com/sharedfiles/filedetails/?id=3774828917

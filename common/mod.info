@@ -6,6 +6,7 @@ poster=opcontainer.png
 icon=opcontainer_icon.png
 
 versionMin=42.20
+versionMax=42.21
 
 modversion=0.6
 author=PatagoniaPZ-Comunity

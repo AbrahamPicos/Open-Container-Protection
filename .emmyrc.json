@@ -1,13 +1,16 @@
 {
-  "completion": {
-    "autoRequireSeparator": "/"
+  "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
+  "workspace": {
+    "library": ["../Umbrella-42.20.0/library"],
+    "workspaceRoots": ["42/media/lua"]
   },
   "runtime": {
     "version": "Lua5.1",
-    "requirePattern": ["?.lua", "?/init.lua", "server/?.lua"]
+    "requirePattern": ["shared/?.lua", "client/?.lua", "server/?.lua"]
   },
-  "workspace": {
-    "library": ["../Umbrella-42.20.0/library"],
-    "workspaceRoots": []
+  "strict": {
+    "typeCall": true,
+    "requirePath": true,
+    "docBaseConstMatchBaseType": false
   }
 }

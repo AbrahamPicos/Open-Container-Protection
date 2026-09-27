@@ -344,7 +344,7 @@ if not OpContainer.isGamePatched--[[@as boolean]] then
 		return OpContainer.destroyActionIsValid(self)
 	end; function ISRemoveCampfireAction:isValid()
 		return OpContainer.removeCampfireActionIsValid(self)
-	end;function ISMoveableSpriteProps:placeMoveableInternal(_square, _item, _spriteName)
+	end; function ISMoveableSpriteProps:placeMoveableInternal(_square, _item, _spriteName)
 		return OpContainer.placeMoveableInternal(self, _square, _item, _spriteName)
 	end
 
