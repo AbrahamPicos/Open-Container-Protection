@@ -45,13 +45,13 @@ utils.OpContainer = utils.OpContainer or {
 
 local OpContainer = utils.OpContainer
 
----@class OPCOptions
+---@class OCPOptions
 ---@field safeHouseCooldown integer
 ---@field safeHousePermission boolean
 ---@field vehicleInteriorPermission boolean
 
 local SafeHouse = OpContainer.SafeHouse
-local Options = secureTable(OpContainer.SandboxVars.OpContainer--[[@as OPCOptions]])
+local Options = secureTable(OpContainer.SandboxVars.OpContainer--[[@as OCPOptions]])
 local BlockedMoveableModes = {pickup = true, rotate = true, scrap = true}
 
 local ISMoveablesAction = OpContainer.ISMoveablesAction
@@ -69,7 +69,7 @@ OpContainer.Legacy = OpContainer.Legacy or {
 
 	moveableIsValid = secureFunction(ISMoveablesAction.isValid),
 	destroyIsValid = secureFunction(ISDestroyStuffAction.isValid),
-	removeCampfireIsValid = secureFunction(ISRemoveCampfireAction.isValid),---@diagnostic disable-next-line: param-type-mismatch
+	removeCampfireIsValid = secureFunction(ISRemoveCampfireAction.isValid), ---@diagnostic disable-next-line: param-type-mismatch
 	placeMoveableInternal = secureFunction(ISMoveableSpriteProps.placeMoveableInternal)
 }
 
@@ -86,19 +86,17 @@ local ISMoveableDefinitions = OpContainer.ISMoveableDefinitions
 local function isObjectRelevant(object)
 
 	-- Validar objeto, que el objeto no sea golpeable, y que no haya sido colocado por un jugador.
-	---@cast object -?
-	if not instanceof(object, "IsoObject")
-		or instanceof(object, "IsoThumpable")
+	---@cast object -? Validación en instanceof.
+	if not instanceof(object, "IsoObject") or instanceof(object, "IsoThumpable")
 		or (isCallSecure(object.isMovedThumpable) and object:isMovedThumpable())
 		or (isCallSecure(object.getModData) and secureTable(object:getModData()).isPlayerPlaced)
+		or not isCallSecure(object.getContainerCount)
 	then
 		return false
 	end
 
-	local containersCount = isCallSecure(object.getContainerCount) and object:getContainerCount()
-
 	-- Validar que el objeto tenga al menos un contenedor.
-	if not isNumberSecure(containersCount) or containersCount < 1 then
+	if not (secureNumber(object:getContainerCount()) > 0) then
 		return false
 	end
 
@@ -113,45 +111,46 @@ end
 ---@return string? msg Un mensaje, si debería mostrarse un mensaje al usuario por esto.
 local function isPlayerAllowedOnSquare(character, square)
 
-	-- Si el jugador está en un interior del mod Project RV Interior, permitir.
-	if Options.vehicleInteriorPermission and (isCallSecure(character.getX) and isCallSecure(character.getY)) then
-		local x, y = character:getX(), character:getY()
+	-- Si siempre se permite en los interiores del mod Project RV Interior, y el objeto está en uno, devolver verdadero.
+	if Options.vehicleInteriorPermission then
+		local x, y = secureNumber(isCallSecure(square.getX) and square:getX()),
+			secureNumber(isCallSecure(square.getY) and square:getY())
 
-		if (isNumberSecure(x) and isNumberSecure(y)) and (x > 22500 and y > 12000) then
+		if x > 22500 and y > 12000 then -- A partir de aquí comienza el mapa de los interiores.
 			return true
 		end
 	end
 
-	local safehouse = (Options.safeHousePermission and isCallSecure(SafeHouse.getSafeHouse))
-		and SafeHouse.getSafeHouse(square) or nil
+	-- Validar que los jugadores puedan alterar contenedores en sus safehouses.
+	if not Options.safeHousePermission then
+		return false
+	end
+
+	local safehouse = isCallSecure(SafeHouse.getSafeHouse) and SafeHouse.getSafeHouse(square) or nil
 
 	-- Validar que el objeto esté en una safehouse, y el jugador esté permitido en ella.
-	---@cast safehouse -?
-	if not instanceof(safehouse, "SafeHouse")
-		or not (isCallSecure(safehouse.playerAllowed) and safehouse:playerAllowed(character))
-		or not isCallSecure(safehouse.getDatetimeCreated)
-	then
+	---@cast safehouse -? Validación en instanceof.
+	if not (instanceof(safehouse, "SafeHouse") and isCallSecure(safehouse.playerAllowed)
+		and safehouse:playerAllowed(character) and isCallSecure(safehouse.getDatetimeCreated)
+	) then
 		return false
 	end
 
 	local current = getTimestampMs()
-	local cooldown = Options.safeHouseCooldown
-	local created = safehouse:getDatetimeCreated()
 
-	-- Validar que ya haya pasado el tiempo de espera de la safehouse.
-	if not (isNumberSecure(current) and isNumberSecure(created) and isNumberSecure(cooldown))
-		or not (isCallSecure(math.abs) and isCallSecure(math.floor))
-	then
+	-- Validar que se tenga una referencia del tiempo actual.
+	if not isNumberSecure(current) then
 		return false
 	end
 
-	local elapsed = ((current - created) / 1000 / 60) - cooldown
+	local elapsed = ((current - secureNumber(safehouse:getDatetimeCreated())) / 1000 / 60)
+		- secureNumber(Options.safeHouseCooldown)
 
+	-- Validar que ya haya pasado el tiempo de espera de la safehouse.
 	if elapsed < 0 then
-		return false, secureString(
-			getText("IGUI_HaloNote_OpContainer_SafeHouseCooldown",
-			secureNumber(math.abs(secureNumber(math.floor(elapsed)))))
-		)
+		return false, getText("IGUI_HaloNote_OpContainer_SafeHouseCooldown", secureNumber(
+			(isCallSecure(math.abs) and math.abs(secureNumber(isCallSecure(math.floor) and math.floor(elapsed))))
+		))
 	end
 
 	-- Devolver verdadero.
@@ -159,41 +158,40 @@ local function isPlayerAllowedOnSquare(character, square)
 end
 
 ------------------------
--- Función principal: --
+-- Función Principal: --
 ------------------------
-
----@alias CustomItem {object:IsoObject?} -- Un objeto del grupo de un objeto multi-sprite.
----@alias CustomGridCache CustomItem[] -- La parte de SpriteGridCache que le interesa a este mod.
 
 -- Verifica si se puede realizar una acción sobre un objeto según el criterio de este mod, considerando a objetos multi-sprite.
 -- Los objetos multi-sprite tienen a otros objetos asociados en celdas adyacentes, y deben tratarse como un único objeto.
 ---@param object IsoObject? El objeto sobre el que se intenta realizar la acción.
 ---@param character IsoPlayer? El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare? La baldosa de mapa donde se encuentra el objeto.
----@param moveProps ISMoveableSpriteProps? Las propiedades del sprite asociado al objeto.
+---@param moveProps (ISMoveableSpriteProps|ISThumpableSpriteProps)? Las propiedades del sprite asociado al objeto.
 ---@return boolean isObjectProtected Si el objeto será protegido por este mod.
 local function isObjectProtected(object, character, square, moveProps)
 
 	-- Validar entorno y objeto.
+	---@cast object -? Validación en instanceof.
 	if not (isClient() or isServer()) or not instanceof(object, "IsoObject") then
 		return false
-	end ---@cast object -?
+	end
 
 	-- Asegurar baldosa.
 	square = square or (isCallSecure(object.getSquare) and object:getSquare())
-	square = (instanceof(square, "IsoGridSquare") and square) or nil
+	square = instanceof(square, "IsoGridSquare") and square or nil
 
 	-- Asegurar las propiedades del sprite asociado objeto.
 	moveProps = secureTable(moveProps
 		or (isCallSecure(ISMoveableSpriteProps.fromObject) and ISMoveableSpriteProps.fromObject(object))
-	)--[[@as ISMoveableSpriteProps]]
+	)--[[@as ISMoveableSpriteProps|ISThumpableSpriteProps]]
 
 	local isRelevant = false
 
 	-- Asegurar caché de cuadrícula, y buscar si alguno de los miembros es relevante (lo que vuelve relevante al objeto).
-	for _, member in pairs(secureTable(((moveProps.isMultiSprite and isCallSecure(moveProps.getSpriteGridInfo))
-		and (square and moveProps:getSpriteGridInfo(square, true))) or {{object = object}}
-	)--[[@as CustomGridCache]]) do
+	for _, member in secureFunction(pairs(secureTable(moveProps.isMultiSprite and square
+		and isCallSecure(moveProps.getSpriteGridInfo)
+		and moveProps.isMultiSprite and moveProps:getSpriteGridInfo(square, true)
+	or {member = {object = object}}))) do
 
 		if isObjectRelevant(secureTable(member).object) then
 			isRelevant = true
@@ -202,12 +200,10 @@ local function isObjectProtected(object, character, square, moveProps)
 	end
 
 	-- Si el objeto no es relevante, no hay jugador, o no hay baldosa, devolver si es un objeto relevante.
-	if not isRelevant
-		or not instanceof(character, "IsoPlayer")
-		or not instanceof(square, "IsoGridSquare")
-	then
+	---@cast character -? Validación en instanceof.
+	if not isRelevant or not (instanceof(character, "IsoPlayer") and square) then
 		return isRelevant
-	end ---@cast character -? ---@cast square -?
+	end
 
 	local isAllowed, msg = isPlayerAllowedOnSquare(character, square)
 
@@ -218,8 +214,8 @@ local function isObjectProtected(object, character, square, moveProps)
 
 	-- Si se está del lado del cliente, notificar al jugador la razón.
 	if isClient() and isCallSecure(character.setHaloNote) then
-		character:setHaloNote(secureString(
-			msg or getText("IGUI_HaloNote_OpContainer_Protected")), 255, 0, 0, 200
+		character:setHaloNote(
+			secureString(msg or getText("IGUI_HaloNote_OpContainer_Protected")), 255, 0, 0, 200
 		)
 	end
 
@@ -237,14 +233,17 @@ end
 ---@return boolean isValid Si la acción es válida.
 function OpContainer.moveablesActionIsValid(self)
 	local isValid = Legacy.moveableIsValid(self)
+
+	-- Validar acción, y que el modo sea de interés para el mod.
+	if not (isValid and BlockedMoveableModes[self.mode]) or ISMoveableDefinitions.cheat then
+		return isValid
+	end
+
 	local character = self.character
 
-	-- Si la acción no es válida, el modo no está bloqueado, no hay jugador, o el jugador está usando el MoveablesCheat,
-	--- devolver si la acción es válida.
-	if not isValid
-		or not BlockedMoveableModes[self.mode] or ISMoveableDefinitions.cheat
-		or not instanceof(character, "IsoPlayer")
-		or (isCallSecure(character.isMovablesCheat) and character:isMovablesCheat())
+	-- Validar que el jugador no esté usando el MoveablesCheat.
+	if instanceof(character, "IsoPlayer")
+		and isCallSecure(character.isMovablesCheat) and character:isMovablesCheat()
 	then
 		return isValid
 	end
@@ -255,22 +254,57 @@ end
 
 -- Se aplica a ISDestroyStuffAction:isValid.
 -- Valida si un objeto puede ser destruído con una almádena, según el criterio de este mod.
+-- Aquí, por alguna razón decidieron nombrar como self.item el campo con el objeto que se destruirá.
 ---@param self ISDestroyStuffAction Una instancia de la clase a la que pertenece la función a la que parcha.
 ---@return boolean isValid Si la acción es válida.
 function OpContainer.destroyActionIsValid(self)
 	local isValid = Legacy.destroyIsValid(self)
+
+	-- Validar acción,
+	if not isValid then
+		return isValid
+	end
+
 	local character = self.character
 
-	-- Si la acción no es válida, no hay jugador, o el jugador está usando el BuildCheat, devolver si la acción es válida.
-	if not isValid
-		or not instanceof(character, "IsoPlayer")
-		or (isCallSecure(character.isBuildCheat) and character:isBuildCheat())
+	-- Validar que el jugador no esté usando el BuildCheat.
+	if instanceof(character, "IsoPlayer")
+		and isCallSecure(character.isBuildCheat) and character:isBuildCheat()
 	then
 		return isValid
 	end
 
 	-- Devolver si el objeto está protegido por este mod.
 	return not isObjectProtected(self.item, character, nil, nil)
+end
+
+-- Se aplica a ISRemoveCampfireAction:isValid.
+-- Valida si una hoguera puede ser recogida, según el criterio de este mod.
+---@param self ISRemoveCampfireAction Una instancia de la clase a la que pertenece la función a la que parcha.
+---@return boolean isValid Si la acción es válida.
+function OpContainer.removeCampfireActionIsValid(self)
+	local isValid = Legacy.removeCampfireIsValid(self)
+
+	-- Validar acción, y que el modo sea de interés para el mod.
+	if not isValid or ISMoveableDefinitions.cheat then
+		return isValid
+	end
+
+	local character = self.character
+
+	-- Validar que el jugador no esté usando el MovablesCheat.
+	if instanceof(character, "IsoPlayer")
+		and isCallSecure(character.isMovablesCheat) and character:isMovablesCheat()
+	then
+		return isValid
+	end
+
+	local campfire = secureTable(self.campfire)
+
+	-- Devolver si el objeto está protegido por este mod.
+	return not isObjectProtected(
+		isCallSecure(campfire.getObject) and campfire:getObject(), character, nil, nil
+	)
 end
 
 -- Se aplica a ISMoveableSpriteProps:placeMoveableInternal.
@@ -284,45 +318,24 @@ end
 function OpContainer.placeMoveableInternal(self, square, item, spriteName)
 	local object = Legacy.placeMoveableInternal(self, square, item, spriteName)
 
-	-- Si no se está del lado del servidor, o el objeto no es relevante, devolver el objeto.
-	---@cast object -?
-	if not isServer()
-		or not isObjectProtected(object, nil, square, nil) -- Esto también valida al objeto.
-		or not (isCallSecure(object.getModData) and isCallSecure(object.transmitModData))
-	then
+	-- Validar entorno, y que el objeto necesite una etiqueta.
+	---@cast object -? Validación en isObjectProtected.
+	if not (isServer()
+		and isObjectProtected(object, nil, square, self) and isCallSecure(object.getModData)
+	) then
 		return object
 	end
 
-	local modData = secureTable(object:getModData())--[[@as {isPlayerPlaced:boolean}]]
+	-- Marcar objeto como colocado por un jugador.
+	secureTable(object:getModData()).isPlayerPlaced = true
 
-	-- Si el objeto aún no estaba marcado como colocado por un jugador, marcar, y sincronizar con los clientes.
-	if not modData.isPlayerPlaced then
-		modData.isPlayerPlaced = true; object:transmitModData()
+	-- Sincronizar con los clientes.
+	if isCallSecure(object.transmitModData) then
+		object:transmitModData()
 	end
 
 	-- Devolver objeto.
 	return object
-end
-
--- Valida si una hoguera puede ser recogida, según el criterio de este mod.
----@param self ISRemoveCampfireAction Una instancia de la clase a la que pertenece la función a la que parcha.
----@return boolean isValid Si la acción es válida.
-function OpContainer.removeCampfireActionIsValid(self)
-	local isValid = Legacy.removeCampfireIsValid(self)
-	local character = self.character
-	local campfire = secureTable(self.campfire)
-
-	-- Si la acción no es válida no hay jugador, o el jugador está usando el MoveablesCheat, devolver si la acción es válida.
-	if not isValid or ISMoveableDefinitions.cheat
-		or not instanceof(character, "IsoPlayer")
-		or (isCallSecure(character.isMovablesCheat) and character:isMovablesCheat())
-		or not isCallSecure(campfire.getObject)
-	then
-		return isValid
-	end
-
-	-- Devolver si el objeto está protegido por este mod.
-	return not isObjectProtected(campfire:getObject(), character, nil, nil)
 end
 
 ----------------

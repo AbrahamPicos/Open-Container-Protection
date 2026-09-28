@@ -4,22 +4,20 @@
 -- Contributors:
 
 _07ca70cd7c514861b4b3897cbf56f40a = _07ca70cd7c514861b4b3897cbf56f40a or {
-	type = type,
-	pairs = pairs,
-	ipairs = ipairs
+	type = type
 }
 
 local utils = _07ca70cd7c514861b4b3897cbf56f40a
 
 ----------------------------
--- Validación de Objetos: --
+-- Validación de objetos: --
 ----------------------------
 
 local type = utils.type
 
 -- Verifica si es seguro intentar indexar una tabla.
 ---@param o any La tabla que se indexará.
----@return true|nil isSecure Si es seguro hacerlo.
+---@return true? isSecure Si es seguro hacerlo.
 function utils.isTableSecure(o)
 
 	if type(o) == "table" then
@@ -29,7 +27,7 @@ end
 
 -- Verifica si es seguro intentar llamar a una función.
 ---@param c function? La función que se quiere llamar.
----@return true|nil isSecure Si es seguro hacerlo.
+---@return true? isSecure Si es seguro hacerlo.
 function utils.isCallSecure(c)
 
 	if type(c) == "function" then
@@ -39,10 +37,20 @@ end
 
 -- Verifica si es seguro usar un número.
 ---@param n number? El número que se quiere usar.
----@return true|nil isSecure Si es seguro hacerlo.
+---@return true? isSecure Si es seguro hacerlo.
 function utils.isNumberSecure(n)
 
 	if type(n) == "number" then
+		return true
+	end
+end
+
+-- Verifica si es seguro usar un string.
+---@param s string? El string que se quiere usar.
+---@return true? isSecure Si es seguro hacerlo.
+function utils.isStringSecure(s)
+
+	if type(s) == "string" then
 		return true
 	end
 end
@@ -54,11 +62,12 @@ end
 local isCallSecure = utils.isCallSecure
 local isTableSecure = utils.isTableSecure
 local isNumberSecure = utils.isNumberSecure
+local isStringSecure = utils.isStringSecure
 
 -- Devuelve una tabla si no la había.
 ---@generic T
 ---@param t T La supuesta tabla.
----@return T t Una tabla.
+---@return T table Una tabla.
 function utils.secureTable(t)
 
 	if isTableSecure(t) then
@@ -71,21 +80,21 @@ end
 -- Devuelve una función si no la había.
 ---@generic F
 ---@param f F La supuesta función.
----@return F object Una función.
+---@return F function Una función.
 function utils.secureFunction(f)
 
 	if isCallSecure(f) then
 		return f
 	end
 
-	return function (...) return false end
+	return function (...) return nil end
 end
 
 -- Devuelve un número si no lo había.
----@generic N
----@param n N El supuesto número.
----@return N number Un número.
+---@param n any El supuesto número.
+---@return number number Un número.
 function utils.secureNumber(n)
+
 	if isNumberSecure(n) then
 		return n
 	end
@@ -93,17 +102,16 @@ function utils.secureNumber(n)
 	return 0
 end
 
--- Devuelve una cadena si no la había.
----@generic S
----@param s S La supuesta cadena.
----@return S string Una cadena.
+-- Devuelve un string si no lo había.
+---@param s any El supuesto string.
+---@return string string Un string.
 function utils.secureString(s)
 
-	if type(s) == "string" then
+	if isStringSecure(s) then
 		return s
 	end
 
-	return "ERROR"
+	return ""
 end
 
 --------------------------
@@ -114,6 +122,8 @@ local secureTable = utils.secureTable
 local secureFunction = utils.secureFunction
 
 utils.print = secureFunction(print)
+utils.pairs = secureFunction(pairs)
+utils.ipairs = secureFunction(ipairs)
 utils.tonumber = secureFunction(tonumber)
 utils.tostring = secureFunction(tostring)
 utils.getmetatable = secureFunction(getmetatable)
@@ -124,5 +134,5 @@ utils.table = secureTable(table)
 utils.string = secureTable(string)
 utils.coroutine = secureTable(coroutine)
 
--- Tenga en cuenta que las funciones seguras devolverán false como fallback, así que debe asegurarse de añadir alternativas
---- cuando espere algo más que un booleano, como `tostring(value) or ""`.
+-- Tenga en cuenta que las funciones seguras devolverán nil como fallback, así que debe asegurarse de añadir alternativas
+--- cuando espere algo más que un valor nulo, como `tostring(value) or ""`.
