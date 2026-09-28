@@ -22,11 +22,14 @@ local secureNumber = utils.secureNumber
 local secureString = utils.secureString
 local secureFunction = utils.secureFunction
 local isCallSecure = utils.isCallSecure
+local isStringSecure = utils.isStringSecure
 local isNumberSecure = utils.isNumberSecure
 
 utils.OpContainer = utils.OpContainer or {
 
+	Events = secureTable(Events),
 	SafeHouse = secureTable(SafeHouse),
+	Capability = secureTable(Capability),
 	SandboxVars = secureTable(SandboxVars),
 
 	ISMoveablesAction = secureTable(ISMoveablesAction),
@@ -37,8 +40,11 @@ utils.OpContainer = utils.OpContainer or {
 	getText = secureFunction(getText),
 	isClient = secureFunction(isClient),
 	isServer = secureFunction(isServer),
+	getTexture = secureFunction(getTexture),
 	instanceof = secureFunction(instanceof),
 	getTimestampMs = secureFunction(getTimestampMs),
+	getSandboxOptions = secureFunction(getSandboxOptions),
+	getSpecificPlayer = secureFunction(getSpecificPlayer),
 
 	ISMoveableDefinitions = secureTable(ISMoveableDefinitions)
 }
@@ -46,9 +52,16 @@ utils.OpContainer = utils.OpContainer or {
 local OpContainer = utils.OpContainer
 
 ---@class OCPOptions
+---@field customExceptions string
 ---@field safeHouseCooldown integer
 ---@field safeHousePermission boolean
 ---@field vehicleInteriorPermission boolean
+
+---@class OCPSpriteException
+---@field isExempt boolean
+---@field spriteName string
+---@field exemptName string
+---@field newConfig string
 
 local SafeHouse = OpContainer.SafeHouse
 local Options = secureTable(OpContainer.SandboxVars.OpContainer--[[@as OCPOptions]])
@@ -157,6 +170,13 @@ local function isPlayerAllowedOnSquare(character, square)
 	return true
 end
 
+-- Verifica si un sprite está exento debido a las excepciones personalizadas.
+---@param moveProps ISMoveableSpriteProps|ISThumpableSpriteProps Las propiedades del sprite.
+---@return OCPSpriteException? exception Los detalles sobre la exepción.
+local function getSpriteException(moveProps)
+	return
+end
+
 ------------------------
 -- Función Principal: --
 ------------------------
@@ -168,7 +188,7 @@ end
 ---@param square IsoGridSquare? La baldosa de mapa donde se encuentra el objeto.
 ---@param moveProps (ISMoveableSpriteProps|ISThumpableSpriteProps)? Las propiedades del sprite asociado al objeto.
 ---@return boolean isObjectProtected Si el objeto será protegido por este mod.
-local function isObjectProtected(object, character, square, moveProps)
+function OpContainer.isObjectProtected(object, character, square, moveProps)
 
 	-- Validar entorno y objeto.
 	---@cast object -? Validación en instanceof.
@@ -199,9 +219,16 @@ local function isObjectProtected(object, character, square, moveProps)
 		end
 	end
 
+	-- Validar la relevancia del objeto.
+	if not isRelevant then
+		return false
+	end
+
+	local exception = secureTable(getSpriteException(moveProps))--[[@as OCPSpriteException]]
+
 	-- Si el objeto no es relevante, no hay jugador, o no hay baldosa, devolver si es un objeto relevante.
 	---@cast character -? Validación en instanceof.
-	if not isRelevant or not (instanceof(character, "IsoPlayer") and square) then
+	if exception.isExempt or not (instanceof(character, "IsoPlayer") and square) then
 		return isRelevant
 	end
 
@@ -226,6 +253,8 @@ end
 --------------
 -- Parches: --
 --------------
+
+local isObjectProtected = OpContainer.isObjectProtected
 
 -- Se aplica a ISMoveablesAction:isValid.
 -- Valida si un objeto puede recogerse, rotarse, y desmantelarse. según el criterio de este mod.

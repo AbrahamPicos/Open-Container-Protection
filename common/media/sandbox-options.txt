@@ -28,3 +28,12 @@ option OpContainer.vehicleInteriorPermission
     page = OpContainer,
     translation = OpContainer_vehicleInteriorPermission,
 }
+
+option OpContainer.customExceptions
+{
+    type = string,
+    default = ,
+
+    page = OpContainer,
+    translation = OpContainer_customExceptions,
+}
