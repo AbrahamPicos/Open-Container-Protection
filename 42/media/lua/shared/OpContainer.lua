@@ -37,7 +37,7 @@ utils.OpContainer = utils.OpContainer or {
 	ISMoveableSpriteProps = secureTable(ISMoveableSpriteProps),
 	ISRemoveCampfireAction = secureTable(ISRemoveCampfireAction),
 
-	getText = secureFunction(getText),
+	getText = secureFunction(getText--[[@as fun(s:string,...:any):string]]),
 	isClient = secureFunction(isClient),
 	isServer = secureFunction(isServer),
 	getTexture = secureFunction(getTexture),
@@ -277,8 +277,14 @@ function OpContainer.moveablesActionIsValid(self)
 		return isValid
 	end
 
-	-- Devolver si el objeto está protegido por este mod.
-	return not isObjectProtected(self.object, character, self.square, self.moveProps)
+	-- Validar que el objeto no esté protegido por este mod.
+	if isObjectProtected(self.object, character, self.square, self.moveProps) then
+		self:stop()
+		return false
+	end
+
+	-- Devolver verdadero.
+	return true
 end
 
 -- Se aplica a ISDestroyStuffAction:isValid.
@@ -340,12 +346,13 @@ end
 -- Marca como isPlayerPlaced a todos los objetos de interés colocados que no se vuelven golpeables al colocarlos.
 -- Esto ayuda a diferenciarlos en casos especiales de los objetos que sí deben protegerse, como con los maniquíes.
 ---@param self ISMoveableSpriteProps Una instancia de la clase a la que pertenece la función a la que parcha.
+---@param character IsoPlayer El jugador que colocó al objeto.
 ---@param square IsoGridSquare La baldosa de mapa donde se colocará al objeto.
 ---@param item InventoryItem El item correspondiente al objeto que se colocará.
 ---@param spriteName string El nombre del sprite del objeto que se colocará.
 ---@return IsoObject? object El objeto que fue colocado.
-function OpContainer.placeMoveableInternal(self, square, item, spriteName)
-	local object = Legacy.placeMoveableInternal(self, square, item, spriteName)
+function OpContainer.placeMoveableInternal(self, character, square, item, spriteName)
+	local object = Legacy.placeMoveableInternal(self, character, square, item, spriteName)
 
 	-- Validar entorno, y que el objeto necesite una etiqueta.
 	---@cast object -? Validación en isObjectProtected.
@@ -386,8 +393,8 @@ if not OpContainer.isGamePatched--[[@as boolean]] then
 		return OpContainer.destroyActionIsValid(self)
 	end; function ISRemoveCampfireAction:isValid()
 		return OpContainer.removeCampfireActionIsValid(self)
-	end; function ISMoveableSpriteProps:placeMoveableInternal(_square, _item, _spriteName)
-		return OpContainer.placeMoveableInternal(self, _square, _item, _spriteName)
+	end; function ISMoveableSpriteProps:placeMoveableInternal(_character, _square, _item, _spriteName)
+		return OpContainer.placeMoveableInternal(self, _character, _square, _item, _spriteName)
 	end
 
 	OpContainer.isGamePatched = true -- Previene inconsistencias graves si el archivo es recargado.
