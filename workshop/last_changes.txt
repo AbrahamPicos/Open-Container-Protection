@@ -1,5 +1,5 @@
-[b]Support 42.21: v0.6.1[/b]
+[b]42.20 support dropped: v0.6.3[/b]
 [list]
-[*]The mod now supports Project Zomboid version 42.21.x.
-[*]The code was refactored to improve it in all respects.
+[*]Support for version 42.20 was formally removed.
+[*]The missing call to the stop method in moveablesActionIsValid was fixed.
 [/list]

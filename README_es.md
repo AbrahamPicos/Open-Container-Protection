@@ -60,7 +60,7 @@ Los trucos necesarios para sortear las restricciones del mod son:
 
 ##
 
-Este mod es 100% creado por humanos y actualmente no se aceptan contribuciones de IA. Se publica bajo la licencia CC0-1.0 y solo es compatible con las últimas versiónes de Project Zomboid: 42.20-42.21.
+Este mod es 100% creado por humanos y actualmente no se aceptan contribuciones de IA. Se publica bajo la licencia CC0-1.0 y solo es compatible con la última versión de Project Zomboid: 42.21.
 
 Última versión probada de Project Zomboid: 42.21.0
 
