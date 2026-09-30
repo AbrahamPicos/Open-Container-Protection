@@ -14,6 +14,8 @@ if not utils then return end
 -----------------------------------------
 
 local math = utils.math
+local table = utils.table
+local string = utils.string
 
 local pairs = utils.pairs
 local print = utils.print
@@ -40,6 +42,7 @@ utils.OpContainer = utils.OpContainer or {
 	getText = secureFunction(getText--[[@as fun(s:string,...:any):string]]),
 	isClient = secureFunction(isClient),
 	isServer = secureFunction(isServer),
+	getSprite = secureFunction(getSprite),
 	getTexture = secureFunction(getTexture),
 	instanceof = secureFunction(instanceof),
 	getTimestampMs = secureFunction(getTimestampMs),
@@ -58,10 +61,10 @@ local OpContainer = utils.OpContainer
 ---@field vehicleInteriorPermission boolean
 
 ---@class OCPSpriteException
+---@field patterns string
 ---@field isExempt boolean
----@field spriteName string
 ---@field exemptName string
----@field newConfig string
+---@field spriteName string
 
 local SafeHouse = OpContainer.SafeHouse
 local Options = secureTable(OpContainer.SandboxVars.OpContainer--[[@as OCPOptions]])
@@ -75,6 +78,7 @@ local ISRemoveCampfireAction = OpContainer.ISRemoveCampfireAction
 local getText = OpContainer.getText
 local isClient = OpContainer.isClient
 local isServer = OpContainer.isServer
+local getSprite = OpContainer.getSprite
 local instanceof = OpContainer.instanceof
 local getTimestampMs = OpContainer.getTimestampMs
 
@@ -121,7 +125,7 @@ end
 ---@param character IsoPlayer El personaje que intenta realizar la acción.
 ---@param square IsoGridSquare La baldosa de mapa donde se encuentra el objeto.
 ---@return boolean isPlayerAllowed Si se permite la alteración.
----@return string? msg Un mensaje, si debería mostrarse un mensaje al usuario por esto.
+---@return string? msg Un mensaje (si debería mostrarse un mensaje al usuario por esto).
 local function isPlayerAllowedOnSquare(character, square)
 
 	-- Si siempre se permite en los interiores del mod Project RV Interior, y el objeto está en uno, devolver verdadero.
@@ -172,9 +176,69 @@ end
 
 -- Verifica si un sprite está exento debido a las excepciones personalizadas.
 ---@param moveProps ISMoveableSpriteProps|ISThumpableSpriteProps Las propiedades del sprite.
----@return OCPSpriteException? exception Los detalles sobre la exepción.
+---@return OCPSpriteException? exception Los detalles sobre la excepción.
 local function getSpriteException(moveProps)
-	return
+
+	-- Validar herramientas necesarias.
+	if not (isCallSecure(string.gsub) and isCallSecure(table.concat) and isCallSecure(string.find)
+		and isCallSecure(string.gmatch) and isCallSecure(moveProps.hasFaces) and isCallSecure(moveProps.getFaces)
+	) then
+		return
+	end
+
+	local names = {} ---@type string[]
+	local spriteName = secureString(moveProps.spriteName)
+
+	-- Buscar los nombres de todos los sprites relacionados con este.
+	for _, face in secureFunction(pairs(
+		secureTable(moveProps:hasFaces() and moveProps:getFaces() or {N = spriteName})
+	)) do
+		local sprite = getSprite(secureString(face))
+		local grid = instanceof(sprite, "IsoSprite") and isCallSecure(sprite.getSpriteGrid)
+			and sprite:getSpriteGrid() or nil
+
+		---@cast grid -? Validación en instanceof.
+		for _, spr in secureFunction(pairs(secureTable(instanceof(grid, "IsoSpriteGrid")
+			and isCallSecure(grid.getSprites) and grid:getSprites() or {[1] = sprite or {}}
+		)--[[@as (IsoSprite[])]])) do
+			names[#names + 1] = secureString(
+				instanceof(sprite, "IsoSprite") and isCallSecure(spr.getName) and spr:getName()
+			)
+		end
+	end
+
+	local namesStr, patterns = secureString(table.concat(names, ",")), {}
+	local exception = {isExempt = false, spriteName = spriteName}
+
+	-- Buscar si alguno de los patrones en la configuración coincide con uno de los nombres.
+	for pattern in secureFunction(string.gmatch(
+		secureString(string.gsub(secureString(Options.customExceptions), "%s+", "")), "([^,]+)"
+	)) do
+
+		if not isStringSecure(pattern) then -- Preservar la configuración.
+			return
+		end
+
+		if not exception.isExempt and string.find(namesStr, pattern, 1, true) then
+			exception.isExempt, exception.exemptName = true, pattern
+
+		else -- Almacenar sólo los patrones que no coincidan.
+			patterns[#patterns + 1] = pattern
+		end
+	end
+
+	-- Si no hubo coincidencia, añadir el nombre del sprite a las excepciones.
+	if not exception.isExempt--[[@as boolean]] then
+		local name = names[1]
+
+		patterns[#patterns + 1], exception.exemptName = name, name
+	end
+
+	-- Preparar los patrones para ser almacenados en la configuración.
+	exception.patterns = table.concat(patterns, ",")
+
+	-- Devolver resultado.
+	return exception
 end
 
 ------------------------
@@ -188,6 +252,7 @@ end
 ---@param square IsoGridSquare? La baldosa de mapa donde se encuentra el objeto.
 ---@param moveProps (ISMoveableSpriteProps|ISThumpableSpriteProps)? Las propiedades del sprite asociado al objeto.
 ---@return boolean isObjectProtected Si el objeto será protegido por este mod.
+---@return OCPSpriteException? exception Los detalles sobre la excepción.
 function OpContainer.isObjectProtected(object, character, square, moveProps)
 
 	-- Validar entorno y objeto.
@@ -228,8 +293,13 @@ function OpContainer.isObjectProtected(object, character, square, moveProps)
 
 	-- Si el objeto no es relevante, no hay jugador, o no hay baldosa, devolver si es un objeto relevante.
 	---@cast character -? Validación en instanceof.
-	if exception.isExempt or not (instanceof(character, "IsoPlayer") and square) then
-		return isRelevant
+	if not (instanceof(character, "IsoPlayer") and square) then
+		return isRelevant, exception
+	end
+
+	-- validar que el objeto no esté exento.
+	if exception.isExempt then
+		return false
 	end
 
 	local isAllowed, msg = isPlayerAllowedOnSquare(character, square)
@@ -257,13 +327,13 @@ end
 local isObjectProtected = OpContainer.isObjectProtected
 
 -- Se aplica a ISMoveablesAction:isValid.
--- Valida si un objeto puede recogerse, rotarse, y desmantelarse. según el criterio de este mod.
+-- Valida si un objeto puede recogerse, rotarse, o desmantelarse. según el criterio de este mod.
 ---@param self ISMoveablesAction Una instancia de la clase a la que pertenece la función a la que parcha.
 ---@return boolean isValid Si la acción es válida.
 function OpContainer.moveablesActionIsValid(self)
 	local isValid = Legacy.moveableIsValid(self)
 
-	-- Validar acción, y que el modo sea de interés para el mod.
+	-- Validar acción, y que el modo de funcionamiento sea de interés para este mod.
 	if not (isValid and BlockedMoveableModes[self.mode]) or ISMoveableDefinitions.cheat then
 		return isValid
 	end
@@ -320,7 +390,7 @@ end
 function OpContainer.removeCampfireActionIsValid(self)
 	local isValid = Legacy.removeCampfireIsValid(self)
 
-	-- Validar acción, y que el modo sea de interés para el mod.
+	-- Validar acción, y que el modo de funcionamiento sea de interés para este mod.
 	if not isValid or ISMoveableDefinitions.cheat then
 		return isValid
 	end
@@ -346,8 +416,8 @@ end
 -- Marca como isPlayerPlaced a todos los objetos de interés colocados que no se vuelven golpeables al colocarlos.
 -- Esto ayuda a diferenciarlos en casos especiales de los objetos que sí deben protegerse, como con los maniquíes.
 ---@param self ISMoveableSpriteProps Una instancia de la clase a la que pertenece la función a la que parcha.
----@param character IsoPlayer El jugador que colocó al objeto.
----@param square IsoGridSquare La baldosa de mapa donde se colocará al objeto.
+---@param character IsoPlayer El jugador que colocó el objeto.
+---@param square IsoGridSquare La baldosa de mapa donde se colocará el objeto.
 ---@param item InventoryItem El item correspondiente al objeto que se colocará.
 ---@param spriteName string El nombre del sprite del objeto que se colocará.
 ---@return IsoObject? object El objeto que fue colocado.

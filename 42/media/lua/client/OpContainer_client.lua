@@ -17,8 +17,6 @@ local OpContainer = utils.OpContainer
 
 if not OpContainer then return end
 
-local table = utils.table
-
 local secureTable = utils.secureTable
 local secureString = utils.secureString
 local isCallSecure = utils.isCallSecure
@@ -49,15 +47,15 @@ local modIcon = getTexture("opcontainer_icon.png")
 -- Funciones auxiliares: --
 ---------------------------
 
--- Añade una hoja de sprites a las exepciones personalizadas del mod.
+-- Añade una hoja de sprites a las excepciones personalizadas del mod.
 ---@param player IsoPlayer El jugador que añadirá la excepción.
 ---@param playerNum integer El número que representa al jugador que añadirá la excepción (para pantalla dividida).
 ---@param isExempt boolean Si hay una excepción. Lo que significa que va a removerse.
----@param newConfig string La lista que contiene todos los elementos de la nueva configuración.
-local function changeCustomExceptions(player, playerNum, isExempt, newConfig)
+---@param patterns string La lista que contiene todos los elementos de la nueva configuración.
+local function changeCustomExceptions(player, playerNum, isExempt, patterns)
     local options = getSandboxOptions()
 
-	-- Validar opciones, y que se pueda instancar un diálogo modal.
+	-- Validar opciones, y que se pueda instanciar un diálogo modal.
     if not (instanceof(options, "SandboxOptions") and isCallSecure(options.getOptionByName)
 		and isCallSecure(options.toLua) and isCallSecure(options.sendToServer) and isCallSecure(ISModalDialog.new)
 	) then
@@ -84,8 +82,7 @@ local function changeCustomExceptions(player, playerNum, isExempt, newConfig)
 		return
 	end
 
-	-- Configurar dialogo modal, y añadirlo a la UI.
-	modal:centerOnScreen(playerNum)
+	-- Confgurar la lógica de los botones del diálogo modal.
 	modal.onclick = function (target, button)
 
 		-- Validar que el botón presionado sea "sí".
@@ -94,7 +91,7 @@ local function changeCustomExceptions(player, playerNum, isExempt, newConfig)
 		end
 
 		-- Cambiar opción al nuevo valor, y sincronizar.
-		option:setValue(newConfig)
+		option:setValue(patterns)
 		options:toLua()
 		options:sendToServer()
 
@@ -105,8 +102,11 @@ local function changeCustomExceptions(player, playerNum, isExempt, newConfig)
 			)), 0, 255, 0, 200)
 		end
 	end
+
+	-- Añadir díalogo modal a la UI, y centrar en la pantalla.
 	modal:initialise()
     modal:addToUIManager()
+	modal:centerOnScreen(playerNum)
 end
 
 ------------------------------
@@ -169,21 +169,21 @@ local function OnFillWorldObjectContextMenu(playerNum, context, worldobjects, te
 	-- Validar tooltip.
 	---@cast tooltip -? Validación en isTableSecure.
 	if not isTableSecure(tooltip) then
-		return -- un tooltip defectuoso podría romper la opción.
+		return -- Un tooltip defectuoso podría romper la opción.
 	end
-
-	-- Configurar la nueva opción.
-	option.iconTexture = instanceof(modIcon, "Texture") and modIcon or nil
-	option.onSelect = function() changeCustomExceptions(player, playerNum, isExempt, exception.newConfig) end
 
 	local texture = getTexture(exception.spriteName)
 
-	-- Configurar tooltip y añadirlo a la opción.
-	tooltip.texture = instanceof(texture, "Texture") and texture or nil
+	-- Configurar tooltip.
 	tooltip.description = secureString(getText((isExempt and "IGUI_ContextMenu_OpContainer_RemoveException_Tooltip"
 		or "IGUI_ContextMenu_OpContainer_AddException_Tooltip"
 	), exception.exemptName))
+	tooltip.texture = instanceof(texture, "Texture") and texture or nil
+
+	-- Configurar la nueva opción.
 	option.toolTip = tooltip
+	option.iconTexture = instanceof(modIcon, "Texture") and modIcon or nil
+	option.onSelect = function() changeCustomExceptions(player, playerNum, isExempt, exception.patterns) end
 end
 
 ----------------
