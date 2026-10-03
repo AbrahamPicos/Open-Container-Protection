@@ -2,11 +2,14 @@
     "Sandbox_OpContainer": "Open Container Protection",
 
     "Sandbox_OpContainer_safeHousePermission": "Permitir en refugios",
-    "Sandbox_OpContainer_safeHousePermission_tooltip": "El mod te permitirá mover o romper contenedores donde reaparece el botín, siempre que se encuentren dentro de tu refugio.",
+    "Sandbox_OpContainer_safeHousePermission_tooltip": "Este mod te permitirá mover o romper los contenedores donde reaparece el botín, siempre y cuando estén ubicados dentro de tu refugio.",
 
     "Sandbox_OpContainer_safeHouseCooldown": "Tiempo de espera del refugio",
-    "Sandbox_OpContainer_safeHouseCooldown_tooltip": "Una vez transcurrido este tiempo (en minutos), el mod te permitirá mover o romper contenedores donde reaparece el botín dentro de tu nuevo refugio.",
+    "Sandbox_OpContainer_safeHouseCooldown_tooltip": "Una vez transcurrido este tiempo (en minutos), este mod te permitirá mover o romper los contenedores donde reaparece el botín dentro de tu nuevo refugio.\nEsto solo funciona si la opción \"Permitir en refugios\" está activada.",
 
     "Sandbox_OpContainer_vehicleInteriorPermission": "Permitir en interiores de vehículos",
-    "Sandbox_OpContainer_vehicleInteriorPermission_tooltip": "El mod te permitirá mover o romper contenedores donde reaparece el botín, siempre que se encuentren dentro de un vehículo (mod Project RV Interior)."
+    "Sandbox_OpContainer_vehicleInteriorPermission_tooltip": "Este mod te permitirá mover o romper los contenedores donde reaparece el botín, siempre y cuando se encuentren dentro de un vehículo (mod Project RV Interior).\nEsto dejará todos los contenedores situados por encima de x:22500,y:12000 totalmente desprotegidos.",
+
+    "Sandbox_OpContainer_customExceptions": "Excepciones personalizadas",
+    "Sandbox_OpContainer_customExceptions_tooltip": ""
 }
