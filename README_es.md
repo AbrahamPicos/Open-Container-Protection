@@ -59,7 +59,7 @@ También protege los surtidores de gasolina.
 
 4. Excepciones personalizadas:
     - Este mod te permitirá mover o romper los contenedores donde reaparece el botín, siempre que el nombre de su sprite coincida con alguno de los nombres (separados por comas) listados aquí. Todas sus caras y cuadrícula multi-sprite se detectarán automáticamente, por lo que —a menos que alguno de tus mods reemplace los sprites (como el mod "Open All Containers"), caso en el que tal vez debas añadir también nombres alternativos— solo necesitas agregar un nombre por contenedor.
-    - Aunque se recomienda añadir nombres específicos para un mayor control, también es posible añadir excepciones por categoría. Por ejemplo, al introducir "appilances", se excluirán todos los contenedores cuyos nombres de sprite incluyan "appilances".
+    - Aunque se recomienda añadir nombres específicos para un mayor control, también es posible añadir excepciones por categoría. Por ejemplo, al introducir "appliances", se excluirán todos los contenedores cuyos nombres de sprite incluyan "appliances".
     - Predeterminado: "".
 
 ##

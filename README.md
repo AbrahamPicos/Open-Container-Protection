@@ -59,7 +59,7 @@ It also protects the gas pumps.
 
 4. Custom exceptions:
     - This mod will allow you to move or break the containers where loot respawns, provided their sprite name matches one of the names (comma-separated) listed here. All their faces and multi-sprite grid are detected automatically, so—unless one of your mods replaces the sprites (such as the "Open All Containers" mod), in which case you might need to add alternative names as well—you only need to add one name per container.
-    - Although adding specific names is recommended for greater control, it is also possible to add exceptions by category. For example, entering "appilances" will exclude all containers whose sprite names include "appilances".
+    - Although adding specific names is recommended for greater control, it is also possible to add exceptions by category. For example, entering "appliances" will exclude all containers whose sprite names include "appliances".
     - Default: "".
 
 ##

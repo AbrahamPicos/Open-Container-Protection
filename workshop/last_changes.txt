@@ -1,5 +1,12 @@
-[b]42.20 support dropped: v0.6.3[/b]
+[b]Custom exceptions added: v0.7[/b]
 [list]
+[*]A custom exception system was added.
+[*]Now, the mod also protects the gas pumps.
 [*]Support for version 42.20 was formally removed.
 [*]The missing call to the stop method in moveablesActionIsValid was fixed.
+[*]An issue was fixed where passing `self` prevented obtaining moveProps in placeMoveableinternal.
+[*]All translations for the sandbox options were improved.
+[*]A new sandbox option was added to control custom exceptions.
+[*]An option was added to the context menu to add and remove custom exceptions.
+[*]All missing translations related to custom exceptions were added.
 [/list]
