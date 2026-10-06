@@ -1,4 +1,14 @@
 {
     "IGUI_HaloNote_OpContainer_Protected": "Contenedor protegido.",
-    "IGUI_HaloNote_OpContainer_SafeHouseCooldown": "Minutos de tiempo de espera restantes: %1"
+    "IGUI_HaloNote_OpContainer_ExceptionAdded": "Excepción añadida.",
+    "IGUI_HaloNote_OpContainer_ExceptionRemoved": "Excepción removida.",
+    "IGUI_HaloNote_OpContainer_SafeHouseCooldown": "Minutos de tiempo de espera restantes: %1.",
+
+    "IGUI_ContextMenu_OpContainer_AddException": "Añadir a las excepciones personalizadas",
+    "IGUI_ContextMenu_OpContainer_AddException_Tooltip": "Añadir este tipo de contenedor a las excepciones personalizadas de Open Container Protection.\n\nNombre de la excepción:\n<RGB:1,1,0>%1",
+    "IGUI_ContextMenu_OpContainer_RemoveException": "Eliminar de las excepciones personalizadas",
+    "IGUI_ContextMenu_OpContainer_RemoveException_Tooltip": "Eliminar este tipo de contenedor de las excepciones personalizadas de Open Container Protection.\n\nNombre de la excepción:\n<RGB:1,1,0>%1",
+
+    "IGUI_ModalDialog_OpContainer_AddException": "Esto dejará desprotegidos todos los contenedores de este tipo. ¿Está seguro?",
+    "IGUI_ModalDialog_OpContainer_RemoveException": "¿Está seguro?"
 }

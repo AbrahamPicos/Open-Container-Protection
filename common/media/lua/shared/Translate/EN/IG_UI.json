@@ -1,4 +1,14 @@
 {
     "IGUI_HaloNote_OpContainer_Protected": "Protected container.",
-    "IGUI_HaloNote_OpContainer_SafeHouseCooldown": "Minutes of cooldown remaining: %1"
+    "IGUI_HaloNote_OpContainer_ExceptionAdded": "Exception added.",
+    "IGUI_HaloNote_OpContainer_ExceptionRemoved": "Exception removed.",
+    "IGUI_HaloNote_OpContainer_SafeHouseCooldown": "Minutes of cooldown remaining: %1",
+
+    "IGUI_ContextMenu_OpContainer_AddException": "Add to custom exceptions",
+    "IGUI_ContextMenu_OpContainer_AddException_Tooltip": "Add this type of container to the Open Container Protection custom exceptions.\n\nException name:\n<RGB:1,1,0>%1",
+    "IGUI_ContextMenu_OpContainer_RemoveException": "Remove from custom exceptions",
+    "IGUI_ContextMenu_OpContainer_RemoveException_Tooltip": "Remove this type of container from the Open Container Protection custom exceptions.\n\nException name:\n<RGB:1,1,0>%1",
+
+    "IGUI_ModalDialog_OpContainer_AddException": "This will leave all containers of this type unprotected. Are you sure?",
+    "IGUI_ModalDialog_OpContainer_RemoveException": "Are you sure?"
 }
