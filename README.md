@@ -4,7 +4,7 @@ English | [Español](README_es.md)
 
 Protect the containers where loot respawns, so that players cannot move or break them.
 
-Unlike other container protection mods, this one is designed to protect all containers that haven't been placed by players, so it will protect any container anywhere on the map. However, it also allows for the configuration of specific exceptions for any container in the game.
+This mod is designed to protect all containers that were not placed by players; therefore, unlike other container protection mods, it will protect any container anywhere on the map. However, it also allows for the configuration of specific exceptions for any container in the game.
 
 It emerged as a free alternative to existing container protection mods. Therefore, unlike those mods, you can do whatever you want with it without needing to credit the contributors.
 
@@ -39,6 +39,8 @@ To date, it has been translated into all variants of Spanish and into English.
     - The player is an administrator using cheats.
     - There is a custom exception for their type.
 
+It also protects the gas pumps.
+
 ## Sandbox options:
 
 1. Allow in safehouses:
@@ -46,22 +48,23 @@ To date, it has been translated into all variants of Spanish and into English.
     - Default: Enabled.
 
 2. Safehouse cooldown:
-    - Once this time (in minutes) has elapsed, this mod will allow you to move or break the containers where the loot respawns inside your new safehouse.
+    - Once this time (in minutes) has elapsed, this mod will allow you to move or break the containers where loot respawns inside your new safehouse.
     - This only works if the "Allow in safehouses" option is enabled.
     - Default: 20.
 
 3. Allow in vehicle interiors:
-    - This mod allow you to move or break the containers where loot respawns, provided they are located inside a vehicle (Project RV Interior mod).
+    - This mod will allow you to move or break the containers where loot respawns, provided they are located inside a vehicle (Project RV Interior mod).
     - This will leave all containers located above x:22500,y:12000 completely unprotected.
     - Default: Disabled.
 
 4. Custom exceptions:
-    - Write.
+    - This mod will allow you to move or break the containers where loot respawns, provided their sprite name matches one of the names (comma-separated) listed here. All their faces and multi-sprite grid are detected automatically, so—unless one of your mods replaces the sprites (such as the "Open All Containers" mod), in which case you might need to add alternative names as well—you only need to add one name per container.
+    - Although adding specific names is recommended for greater control, it is also possible to add exceptions by category. For example, entering "appilances" will exclude all containers whose sprite names include "appilances".
     - Default: "".
 
 ##
 
-The recommended way to add and remove custom exceptions is via the world's context menu option, but you will not be able to see it unless you have a role with the `SandboxOptions` capability.
+The recommended way to add and remove custom exceptions is via the world context menu option (by right-clicking directly on the container), but you will not be able to see it unless you have a role with the `SandboxOptions` capability.
 
 The cheats needed to bypass the mod's restrictions are:
 

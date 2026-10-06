@@ -35,13 +35,12 @@ local getSpecificPlayer = OpContainer.getSpecificPlayer
 OpContainer.ISModalDialog = OpContainer.ISModalDialog or secureTable(ISModalDialog)
 OpContainer.ISWorldObjectContextMenu = OpContainer.ISWorldObjectContextMenu or secureTable(ISWorldObjectContextMenu)
 
+local modIcon = getTexture("opcontainer_icon.png")
+
 local ISModalDialog = OpContainer.ISModalDialog
 local ISWorldObjectContextMenu = OpContainer.ISWorldObjectContextMenu
 
 local getSandboxOptions = OpContainer.getSandboxOptions
-local isObjectProtected = OpContainer.isObjectProtected
-
-local modIcon = getTexture("opcontainer_icon.png")
 
 ---------------------------
 -- Funciones auxiliares: --
@@ -144,7 +143,7 @@ local function OnFillWorldObjectContextMenu(playerNum, context, worldobjects, te
 		return
 	end
 
-	local isRelevant, exception = isObjectProtected(
+	local isRelevant, exception = OpContainer.isObjectProtected(
 		secureTable(worldobjects)[1], nil, nil, nil
 	)
 
@@ -154,16 +153,9 @@ local function OnFillWorldObjectContextMenu(playerNum, context, worldobjects, te
 	end
 
 	local isExempt = exception.isExempt
-	local option = isCallSecure(context.addOption) and context:addOption(secureString(getText(
+	local option = secureTable(isCallSecure(context.addOption) and context:addOption(secureString(getText(
 		isExempt and "IGUI_ContextMenu_OpContainer_RemoveException" or "IGUI_ContextMenu_OpContainer_AddException"
-	)), nil, nil)
-
-	-- Validar opción contextual.
-	---@cast option -? Validación en isTableSecure.
-	if not isTableSecure(option) then
-		return
-	end
-
+	)), nil, nil))--[[@as umbrella.ISContextMenu.Option]]
 	local tooltip = isCallSecure(ISWorldObjectContextMenu.addToolTip) and ISWorldObjectContextMenu.addToolTip()
 
 	-- Validar tooltip.

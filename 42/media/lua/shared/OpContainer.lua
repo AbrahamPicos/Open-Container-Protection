@@ -106,14 +106,16 @@ local function isObjectRelevant(object)
 	---@cast object -? Validación en instanceof.
 	if not instanceof(object, "IsoObject") or instanceof(object, "IsoThumpable")
 		or (isCallSecure(object.isMovedThumpable) and object:isMovedThumpable())
-		or (isCallSecure(object.getModData) and secureTable(object:getModData()).isPlayerPlaced)
-		or not isCallSecure(object.getContainerCount)
 	then
 		return false
 	end
 
-	-- Validar que el objeto tenga al menos un contenedor.
-	if not (secureNumber(object:getContainerCount()) > 0) then
+	local data = secureTable(isCallSecure(object.getModData) and object:getModData())--[[@as table]]
+
+	-- Validar que el objeto tenga modData que lo haga relevante, o que tenga al menos un contenedor.
+	if not data.fuelAmount and (data.isPlayerPlaced
+		or (isCallSecure(object.getContainerCount) and secureNumber(object:getContainerCount()) < 1)
+	) then
 		return false
 	end
 
@@ -207,8 +209,8 @@ local function getSpriteException(moveProps)
 		end
 	end
 
+	local exception = {isExempt = false}
 	local namesStr, patterns = secureString(table.concat(names, ",")), {}
-	local exception = {isExempt = false, spriteName = spriteName}
 
 	-- Buscar si alguno de los patrones en la configuración coincide con uno de los nombres.
 	for pattern in secureFunction(string.gmatch(
@@ -229,16 +231,14 @@ local function getSpriteException(moveProps)
 
 	-- Si no hubo coincidencia, añadir el nombre del sprite a las excepciones.
 	if not exception.isExempt--[[@as boolean]] then
-		local name = names[1]
-
-		patterns[#patterns + 1], exception.exemptName = name, name
+		patterns[#patterns + 1], exception.exemptName = spriteName, spriteName
 	end
 
 	-- Preparar los patrones para ser almacenados en la configuración.
-	exception.patterns = table.concat(patterns, ",")
+	exception.patterns, exception.spriteName = table.concat(patterns, ","), spriteName
 
 	-- Devolver resultado.
-	return exception
+	return isStringSecure(exception.patterns) and exception or nil
 end
 
 ------------------------
@@ -324,21 +324,19 @@ end
 -- Parches: --
 --------------
 
-local isObjectProtected = OpContainer.isObjectProtected
-
 -- Se aplica a ISMoveablesAction:isValid.
--- Valida si un objeto puede recogerse, rotarse, o desmantelarse. según el criterio de este mod.
----@param self ISMoveablesAction Una instancia de la clase a la que pertenece la función a la que parcha.
+-- Valida si un objeto puede recogerse, rotarse, o desmantelarse, según el criterio de este mod.
+---@param o ISMoveablesAction Una instancia de la clase a la que pertenece la función a la que parcha.
 ---@return boolean isValid Si la acción es válida.
-function OpContainer.moveablesActionIsValid(self)
-	local isValid = Legacy.moveableIsValid(self)
+function OpContainer.isMoveablesActionValid(o)
+	local isValid = Legacy.moveableIsValid(o)
 
 	-- Validar acción, y que el modo de funcionamiento sea de interés para este mod.
-	if not (isValid and BlockedMoveableModes[self.mode]) or ISMoveableDefinitions.cheat then
+	if not (isValid and BlockedMoveableModes[o.mode]) or ISMoveableDefinitions.cheat then
 		return isValid
 	end
 
-	local character = self.character
+	local character = o.character
 
 	-- Validar que el jugador no esté usando el MoveablesCheat.
 	if instanceof(character, "IsoPlayer")
@@ -348,8 +346,8 @@ function OpContainer.moveablesActionIsValid(self)
 	end
 
 	-- Validar que el objeto no esté protegido por este mod.
-	if isObjectProtected(self.object, character, self.square, self.moveProps) then
-		self:stop()
+	if OpContainer.isObjectProtected(o.object, character, o.square, o.moveProps) then
+		o:stop()
 		return false
 	end
 
@@ -360,17 +358,17 @@ end
 -- Se aplica a ISDestroyStuffAction:isValid.
 -- Valida si un objeto puede ser destruído con una almádena, según el criterio de este mod.
 -- Aquí, por alguna razón decidieron nombrar como self.item el campo con el objeto que se destruirá.
----@param self ISDestroyStuffAction Una instancia de la clase a la que pertenece la función a la que parcha.
+---@param o ISDestroyStuffAction Una instancia de la clase a la que pertenece la función a la que parcha.
 ---@return boolean isValid Si la acción es válida.
-function OpContainer.destroyActionIsValid(self)
-	local isValid = Legacy.destroyIsValid(self)
+function OpContainer.isDestroyActionValid(o)
+	local isValid = Legacy.destroyIsValid(o)
 
 	-- Validar acción,
 	if not isValid then
 		return isValid
 	end
 
-	local character = self.character
+	local character = o.character
 
 	-- Validar que el jugador no esté usando el BuildCheat.
 	if instanceof(character, "IsoPlayer")
@@ -380,22 +378,22 @@ function OpContainer.destroyActionIsValid(self)
 	end
 
 	-- Devolver si el objeto está protegido por este mod.
-	return not isObjectProtected(self.item, character, nil, nil)
+	return not OpContainer.isObjectProtected(o.item, character, nil, nil)
 end
 
 -- Se aplica a ISRemoveCampfireAction:isValid.
 -- Valida si una hoguera puede ser recogida, según el criterio de este mod.
----@param self ISRemoveCampfireAction Una instancia de la clase a la que pertenece la función a la que parcha.
+---@param o ISRemoveCampfireAction Una instancia de la clase a la que pertenece la función a la que parcha.
 ---@return boolean isValid Si la acción es válida.
-function OpContainer.removeCampfireActionIsValid(self)
-	local isValid = Legacy.removeCampfireIsValid(self)
+function OpContainer.isRemoveCampfireActionValid(o)
+	local isValid = Legacy.removeCampfireIsValid(o)
 
 	-- Validar acción, y que el modo de funcionamiento sea de interés para este mod.
 	if not isValid or ISMoveableDefinitions.cheat then
 		return isValid
 	end
 
-	local character = self.character
+	local character = o.character
 
 	-- Validar que el jugador no esté usando el MovablesCheat.
 	if instanceof(character, "IsoPlayer")
@@ -404,10 +402,10 @@ function OpContainer.removeCampfireActionIsValid(self)
 		return isValid
 	end
 
-	local campfire = secureTable(self.campfire)
+	local campfire = secureTable(o.campfire)
 
 	-- Devolver si el objeto está protegido por este mod.
-	return not isObjectProtected(
+	return not OpContainer.isObjectProtected(
 		isCallSecure(campfire.getObject) and campfire:getObject(), character, nil, nil
 	)
 end
@@ -415,19 +413,19 @@ end
 -- Se aplica a ISMoveableSpriteProps:placeMoveableInternal.
 -- Marca como isPlayerPlaced a todos los objetos de interés colocados que no se vuelven golpeables al colocarlos.
 -- Esto ayuda a diferenciarlos en casos especiales de los objetos que sí deben protegerse, como con los maniquíes.
----@param self ISMoveableSpriteProps Una instancia de la clase a la que pertenece la función a la que parcha.
----@param character IsoPlayer El jugador que colocó el objeto.
+---@param o ISMoveableSpriteProps Una instancia de la clase a la que pertenece la función a la que parcha.
+---@param character IsoPlayer El jugador que colocará el objeto.
 ---@param square IsoGridSquare La baldosa de mapa donde se colocará el objeto.
 ---@param item InventoryItem El item correspondiente al objeto que se colocará.
 ---@param spriteName string El nombre del sprite del objeto que se colocará.
 ---@return IsoObject? object El objeto que fue colocado.
-function OpContainer.placeMoveableInternal(self, character, square, item, spriteName)
-	local object = Legacy.placeMoveableInternal(self, character, square, item, spriteName)
+function OpContainer.placeMoveableInternal(o, character, square, item, spriteName)
+	local object = Legacy.placeMoveableInternal(o, character, square, item, spriteName)
 
 	-- Validar entorno, y que el objeto necesite una etiqueta.
 	---@cast object -? Validación en isObjectProtected.
 	if not (isServer()
-		and isObjectProtected(object, nil, square, self) and isCallSecure(object.getModData)
+		and OpContainer.isObjectProtected(object, nil, square, nil) and isCallSecure(object.getModData)
 	) then
 		return object
 	end
@@ -458,11 +456,11 @@ end
 if not OpContainer.isGamePatched--[[@as boolean]] then
 
 	function ISMoveablesAction:isValid()
-		return OpContainer.moveablesActionIsValid(self)
+		return OpContainer.isMoveablesActionValid(self)
 	end; function ISDestroyStuffAction:isValid()
-		return OpContainer.destroyActionIsValid(self)
+		return OpContainer.isDestroyActionValid(self)
 	end; function ISRemoveCampfireAction:isValid()
-		return OpContainer.removeCampfireActionIsValid(self)
+		return OpContainer.isRemoveCampfireActionValid(self)
 	end; function ISMoveableSpriteProps:placeMoveableInternal(_character, _square, _item, _spriteName)
 		return OpContainer.placeMoveableInternal(self, _character, _square, _item, _spriteName)
 	end
@@ -470,7 +468,9 @@ if not OpContainer.isGamePatched--[[@as boolean]] then
 	OpContainer.isGamePatched = true -- Previene inconsistencias graves si el archivo es recargado.
 end
 
-print("[OpContainer]: Loaded and ready.")
+-------------------------------
+-- Resumen de deuda técnica. --
+-------------------------------
 
 -- La opción para no proteger los contenedores en los interiores del mod "Project RV Interior" dejará sin proteger a todos
 --- los contenedores en esas habitaciones. Hace falta una integración con un mod de protección de vehículos para sólo permitir
@@ -480,3 +480,10 @@ print("[OpContainer]: Loaded and ready.")
 --- removí cualquier protección del lado del servidor. De cualquier forma, esta protección no era más que un placebo debido a
 --- que los contenedores aún podían destruirse con paquetes "falsos", -lo que ocurre en todos los mods de este tipo-, así que no
 --- lo considero un problema crítico. Sin embargo, entiendo que debería solucionarlo en los próximos meses.
+
+-- Las nuevas excepciones personalizados tienen 3 problemas no-criticos. Los dos primeros, son que la opción del menú contextual
+--- no aparecerá con contenedores que hayan sido colocados por jugadores, y que aparecerá al dar click derecho sobre un
+--- dispensador de gasolina. El tercero, es que aún son difíciles de usar sin un menú que muestre las excepciones añadidas para
+--- poder eliminarlas. Todo esto es al menos molesto.
+
+print("[OpContainer]: Loaded and ready.")

@@ -4,7 +4,7 @@
 
 Protege los contenedores donde reaparece el botín, para que los jugadores no puedan moverlos ni romperlos.
 
-A diferencia de otros mods de protección de contenedores, este está diseñado para proteger todos los contenedores que no hayan sido colocados por los jugadores, por lo que protegerá cualquier contenedor en cualquier lugar del mapa. No obstante, también permite configurar excepciones específicas para cualquier contenedor del juego.
+Este mod está diseñado para proteger todos los contenedores que no hayan sido colocados por los jugadores; por lo tanto, a diferencia de otros mods de protección de contenedores, protegerá cualquier contenedor en cualquier parte del mapa. Sin embargo, también permite configurar excepciones específicas para cualquier contenedor del juego.
 
 Surgió como una alternativa libre a los mods de protección de contenedores existentes. Por lo tanto, a diferencia de esos mods, puedes hacer lo que quieras con él sin necesidad de dar crédito a los colaboradores.
 
@@ -39,6 +39,8 @@ Hasta la fecha, se ha traducido a todas las variantes del español y al inglés.
     - El jugador es un administrador que usa trucos.
     - Existe una excepción personalizada para su tipo.
 
+También protege los surtidores de gasolina.
+
 ## Opciones de sandbox:
 
 1. Permitir en refugios:
@@ -56,12 +58,13 @@ Hasta la fecha, se ha traducido a todas las variantes del español y al inglés.
     - Predeterminado: Deshabilitada.
 
 4. Excepciones personalizadas:
-    - Escribe.
+    - Este mod te permitirá mover o romper los contenedores donde reaparece el botín, siempre que el nombre de su sprite coincida con alguno de los nombres (separados por comas) listados aquí. Todas sus caras y cuadrícula multi-sprite se detectarán automáticamente, por lo que —a menos que alguno de tus mods reemplace los sprites (como el mod "Open All Containers"), caso en el que tal vez debas añadir también nombres alternativos— solo necesitas agregar un nombre por contenedor.
+    - Aunque se recomienda añadir nombres específicos para un mayor control, también es posible añadir excepciones por categoría. Por ejemplo, al introducir "appilances", se excluirán todos los contenedores cuyos nombres de sprite incluyan "appilances".
     - Predeterminado: "".
 
 ##
 
-La forma recomendada de añadir y eliminar excepciones personalizadas es a través de la opción del menú contextual del mundo, pero no podrás verla a menos que tengas un rol con la capacidad `SandboxOptions`.
+La forma recomendada de añadir y eliminar excepciones personalizadas es a través de la opción del menú contextual del mundo (haciendo clic con el botón derecho directamente sobre el contenedor), pero no podrás verla a menos que tengas un rol con la capacidad `SandboxOptions`.
 
 Los trucos necesarios para sortear las restricciones del mod son:
 
