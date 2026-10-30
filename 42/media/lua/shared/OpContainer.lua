@@ -30,6 +30,7 @@ local isNumberSecure = utils.isNumberSecure
 utils.OpContainer = utils.OpContainer or {
 
 	Events = secureTable(Events),
+	ArrayList = secureTable(ArrayList),
 	SafeHouse = secureTable(SafeHouse),
 	Capability = secureTable(Capability),
 	SandboxVars = secureTable(SandboxVars),
@@ -39,7 +40,7 @@ utils.OpContainer = utils.OpContainer or {
 	ISMoveableSpriteProps = secureTable(ISMoveableSpriteProps),
 	ISRemoveCampfireAction = secureTable(ISRemoveCampfireAction),
 
-	getText = secureFunction(getText--[[@as fun(s:string,...:any):string]]),
+	getText = secureFunction(getText--[[@as fun(s:string,...:number|string):string]]),
 	isClient = secureFunction(isClient),
 	isServer = secureFunction(isServer),
 	getSprite = secureFunction(getSprite),
@@ -65,8 +66,10 @@ local OpContainer = utils.OpContainer
 ---@field isExempt boolean
 ---@field exemptName string
 ---@field spriteName string
+---@field isMoveable boolean
 
 local SafeHouse = OpContainer.SafeHouse
+local ArrayList = OpContainer.ArrayList
 local Options = secureTable(OpContainer.SandboxVars.OpContainer--[[@as OCPOptions]])
 local BlockedMoveableModes = {pickup = true, rotate = true, scrap = true}
 
@@ -113,8 +116,8 @@ local function isObjectRelevant(object)
 	local data = secureTable(isCallSecure(object.getModData) and object:getModData())--[[@as table]]
 
 	-- Validar que el objeto tenga modData que lo haga relevante, o que tenga al menos un contenedor.
-	if not data.fuelAmount and (data.isPlayerPlaced
-		or (isCallSecure(object.getContainerCount) and secureNumber(object:getContainerCount()) < 1)
+	if not (data.fuelAmount or instanceof(object, "IsoFeedingTrough")) and (
+		data.isPlayerPlaced or (isCallSecure(object.getContainerCount) and secureNumber(object:getContainerCount()) < 1)
 	) then
 		return false
 	end
@@ -209,7 +212,7 @@ local function getSpriteException(moveProps)
 		end
 	end
 
-	local exception = {isExempt = false}
+	local exception = {isExempt = false, isMoveable = moveProps.isMoveable}
 	local namesStr, patterns = secureString(table.concat(names, ",")), {}
 
 	-- Buscar si alguno de los patrones en la configuración coincide con uno de los nombres.
@@ -252,33 +255,34 @@ end
 ---@param square IsoGridSquare? La baldosa de mapa donde se encuentra el objeto.
 ---@param moveProps (ISMoveableSpriteProps|ISThumpableSpriteProps)? Las propiedades del sprite asociado al objeto.
 ---@return boolean isObjectProtected Si el objeto será protegido por este mod.
----@return OCPSpriteException? exception Los detalles sobre la excepción.
+---@return OCPSpriteException? exception Los detalles sobre la excepción (si no se proporcionó jugador o baldosa).
 function OpContainer.isObjectProtected(object, character, square, moveProps)
 
 	-- Validar entorno y objeto.
 	---@cast object -? Validación en instanceof.
-	if not (isClient() or isServer()) or not instanceof(object, "IsoObject") then
+	if not ((isServer() or isClient()) and instanceof(object, "IsoObject") and isCallSecure(ArrayList.new)
+		and isCallSecure(object.getSpriteGridObjectsIncludingSelf)
+	) then
 		return false
 	end
 
-	-- Asegurar baldosa.
-	square = square or (isCallSecure(object.getSquare) and object:getSquare())
-	square = instanceof(square, "IsoGridSquare") and square or nil
+	local objects = ArrayList.new()--[[@as ArrayList<IsoObject>]]
 
-	-- Asegurar las propiedades del sprite asociado objeto.
-	moveProps = secureTable(moveProps
-		or (isCallSecure(ISMoveableSpriteProps.fromObject) and ISMoveableSpriteProps.fromObject(object))
-	)--[[@as ISMoveableSpriteProps|ISThumpableSpriteProps]]
+	-- Validar la nueva lista de objetos.
+	if not (instanceof(objects, "ArrayList") and isCallSecure(objects.size) and isCallSecure(objects.get)) then
+		return false
+	end
 
 	local isRelevant = false
 
-	-- Asegurar caché de cuadrícula, y buscar si alguno de los miembros es relevante (lo que vuelve relevante al objeto).
-	for _, member in secureFunction(pairs(secureTable(moveProps.isMultiSprite and square
-		and isCallSecure(moveProps.getSpriteGridInfo)
-		and moveProps.isMultiSprite and moveProps:getSpriteGridInfo(square, true)
-	or {member = {object = object}}))) do
+	-- Buscar todos los objetos relacionados con este (miembros), y añadirlos a la lista.
+	object:getSpriteGridObjectsIncludingSelf(objects)
 
-		if isObjectRelevant(secureTable(member).object) then
+	-- Buscar si alguno de los miembros es relevante (lo que vuelve relevante al objeto).
+	for i = 1, objects:size() do
+		local obj = objects:get(i - 1)
+
+		if isObjectRelevant(obj) then
 			isRelevant = true
 			break
 		end
@@ -289,7 +293,13 @@ function OpContainer.isObjectProtected(object, character, square, moveProps)
 		return false
 	end
 
-	local exception = secureTable(getSpriteException(moveProps))--[[@as OCPSpriteException]]
+	-- Asegurar baldosa.
+	square = square or (isCallSecure(object.getSquare) and object:getSquare())
+	square = instanceof(square, "IsoGridSquare") and square or nil
+
+	local exception = secureTable(getSpriteException(secureTable(moveProps
+		or (isCallSecure(ISMoveableSpriteProps.fromObject) and ISMoveableSpriteProps.fromObject(object))
+	)--[[@as ISMoveableSpriteProps|ISThumpableSpriteProps]]))--[[@as OCPSpriteException]]
 
 	-- Si el objeto no es relevante, no hay jugador, o no hay baldosa, devolver si es un objeto relevante.
 	---@cast character -? Validación en instanceof.
@@ -297,7 +307,7 @@ function OpContainer.isObjectProtected(object, character, square, moveProps)
 		return isRelevant, exception
 	end
 
-	-- validar que el objeto no esté exento.
+	-- Validar que el objeto no esté exento.
 	if exception.isExempt then
 		return false
 	end
@@ -420,7 +430,9 @@ end
 ---@param spriteName string El nombre del sprite del objeto que se colocará.
 ---@return IsoObject? object El objeto que fue colocado.
 function OpContainer.placeMoveableInternal(o, character, square, item, spriteName)
-	local object = Legacy.placeMoveableInternal(o, character, square, item, spriteName)
+	local object = Legacy.placeMoveableInternal(
+		o, character, square, item, spriteName
+	)
 
 	-- Validar entorno, y que el objeto necesite una etiqueta.
 	---@cast object -? Validación en isObjectProtected.
@@ -472,18 +484,16 @@ end
 -- Resumen de deuda técnica. --
 -------------------------------
 
--- La opción para no proteger los contenedores en los interiores del mod "Project RV Interior" dejará sin proteger a todos
+-- La opción para no proteger los contenedores en los interiores del mod "Project RV Interior" dejará sin proteger todos
 --- los contenedores en esas habitaciones. Hace falta una integración con un mod de protección de vehículos para sólo permitir
---- al jugador en los contenedores que le corresponden.
+--- al jugador alterar los contenedores que le corresponden.
 
 -- Los últimos commits solucionaron las inconsistencias leves reportadas previamente, pero mientras lo hacía, accidentalmente
 --- removí cualquier protección del lado del servidor. De cualquier forma, esta protección no era más que un placebo debido a
 --- que los contenedores aún podían destruirse con paquetes "falsos", -lo que ocurre en todos los mods de este tipo-, así que no
 --- lo considero un problema crítico. Sin embargo, entiendo que debería solucionarlo en los próximos meses.
 
--- Las nuevas excepciones personalizados tienen 3 problemas no-criticos. Los dos primeros, son que la opción del menú contextual
---- no aparecerá con contenedores que hayan sido colocados por jugadores, y que aparecerá al dar click derecho sobre un
---- dispensador de gasolina. El tercero, es que aún son difíciles de usar sin un menú que muestre las excepciones añadidas para
---- poder eliminarlas. Todo esto es al menos molesto.
+-- Las nuevas excepciones personalizados aún son difíciles de usar sin un menú que muestre las excepciones añadidas para poder
+--- eliminarlas de forma conveniente. Esto es al menos molesto.
 
 print("[OpContainer]: Loaded and ready.")

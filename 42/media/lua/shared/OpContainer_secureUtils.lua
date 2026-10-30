@@ -124,6 +124,7 @@ local secureFunction = utils.secureFunction
 utils.print = secureFunction(print)
 utils.pairs = secureFunction(pairs)
 utils.ipairs = secureFunction(ipairs)
+utils.unpack = secureFunction(unpack)
 utils.tonumber = secureFunction(tonumber)
 utils.tostring = secureFunction(tostring)
 utils.getmetatable = secureFunction(getmetatable)

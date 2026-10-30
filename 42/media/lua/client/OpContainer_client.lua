@@ -97,7 +97,7 @@ local function changeCustomExceptions(player, playerNum, isExempt, patterns)
 		-- Notificar al usuario.
 		if isCallSecure(player.setHaloNote) then
 			player:setHaloNote(secureString(getText(
-			(isExempt and "IGUI_HaloNote_OpContainer_ExceptionRemoved") or "IGUI_HaloNote_OpContainer_ExceptionAdded"
+				(isExempt and "IGUI_HaloNote_OpContainer_ExceptionRemoved") or "IGUI_HaloNote_OpContainer_ExceptionAdded"
 			)), 0, 255, 0, 200)
 		end
 	end
@@ -106,6 +106,46 @@ local function changeCustomExceptions(player, playerNum, isExempt, patterns)
 	modal:initialise()
     modal:addToUIManager()
 	modal:centerOnScreen(playerNum)
+end
+
+-- Devuelve un maniquí si hay uno, o en su defecto el objeto dado.
+---@param object IsoObject? El objecto dado.
+---@return IsoObject? object Un maniquí, o en su defecto el objeto dado si había uno.
+local function getTargetObject(object)
+
+	-- Validar objeto.
+	---@cast object -? Validación en instanceof.
+	if not (instanceof(object, "IsoObject") and isCallSecure(object.getSquare)) then
+		return object
+	end
+
+	local square = object:getSquare()
+
+	-- Validar baldosa.
+	if not (instanceof(square, "IsoGridSquare") and isCallSecure(square.getObjects)) then
+		return object
+	end
+
+	local objects = square:getObjects()
+
+	-- Validar la lista de los objetos en la baldosa.
+	if not ((instanceof(objects, "PZArrayList") or instanceof(objects, "ArrayList"))
+		and isCallSecure(objects.size) and isCallSecure(objects.get))
+	then
+		return object
+	end
+
+	-- Buscar si uno de los objetos en la lista es un maniquí, y devolverlo si lo es.
+	for i = 0, objects:size() - 1 do
+		local obj = objects:get(i)
+
+		if instanceof(obj, "IsoMannequin") then
+			return obj
+		end
+	end
+
+	-- Devolver el objeto dado.
+	return object
 end
 
 ------------------------------
@@ -144,11 +184,11 @@ local function OnFillWorldObjectContextMenu(playerNum, context, worldobjects, te
 	end
 
 	local isRelevant, exception = OpContainer.isObjectProtected(
-		secureTable(worldobjects)[1], nil, nil, nil
+		getTargetObject((worldobjects)[1]), nil, nil, nil
 	)
 
 	-- Validar la relevanca del objeto, y que se disponga de su excepción.
-	if not isRelevant or not exception then
+	if not (isRelevant and exception and exception.isMoveable) then
 		return
 	end
 
